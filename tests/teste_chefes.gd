@@ -4,7 +4,7 @@ extends SceneTree
 
 var passou := 0
 var falhou := 0
-const PRONTOS := ["rei", "slime_mae", "aranha_rainha", "colosso"]
+const PRONTOS := ["rei", "slime_mae", "aranha_rainha", "colosso", "olho_abismo", "lich"]
 
 
 func _initialize() -> void:
@@ -16,7 +16,9 @@ func _rodar() -> void:
 	for t: String in ["teste_vida_espera_fases", "teste_barra_no_hud", "teste_rei_fase3",
 			"teste_slime_mae_salta_com_aviso", "teste_slime_mae_divide", "teste_invocados_somem_com_chefe",
 			"teste_rainha_teia_vira_poca", "teste_rainha_fase2_invoca", "teste_rainha_investida_avisada",
-			"teste_colosso_investe_ate_parede", "teste_colosso_tonto", "teste_colosso_fase3_duas"]:
+			"teste_colosso_investe_ate_parede", "teste_colosso_tonto", "teste_colosso_fase3_duas",
+			"teste_olho_espiral", "teste_olho_fase2_olhinhos", "teste_olho_volta_a_levar_dano", "teste_olho_feixe_avisado",
+			"teste_lich_teleporta_leque", "teste_lich_copias", "teste_lich_chuva_com_saida"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -85,6 +87,10 @@ func teste_vida_espera_fases() -> void:
 		await frames(30)
 		ferir_ate(c, 0.6)
 		await frames(3)
+		for v: Variant in sala._inimigos.duplicate():   # olhinhos do Olho do Abismo protegem a fase 2
+			if is_instance_valid(v) and (v as Inimigo).tipo == "olhinho":
+				(v as Inimigo).levar_tiro(99)
+		await frames(2)
 		ferir_ate(c, 0.3)
 		await frames(3)
 		checa(fases == [2, 3] and c.fase() == 3, "%s: fases 2 e 3 a 2/3 e 1/3 (%s)" % [nome, fases])
@@ -287,4 +293,119 @@ func teste_colosso_fase3_duas() -> void:
 			break
 		anterior = e
 	checa(investidas == 2, "Colosso fase 3: 2 investidas antes de ficar tonto (%d)" % investidas)
+	await desmontar(sala)
+
+
+func teste_olho_espiral() -> void:
+	var sala := montar("olho_abismo")
+	var c := sala.chefe()
+	var viu := false
+	for i in 60 * 6:
+		await physics_frame
+		if c.ultima_rajada == 16:
+			viu = true
+			break
+	checa(viu, "Olho do Abismo: espiral de 16 tiros")
+	await desmontar(sala)
+
+
+func teste_olho_fase2_olhinhos() -> void:
+	var sala := montar("olho_abismo")
+	var c := sala.chefe()
+	await frames(100)
+	ferir_ate(c, 0.6)
+	await frames(10)
+	checa(vivos_do_tipo(sala, "olhinho") == 4, "fase 2: 4 olhinhos (%d)" % vivos_do_tipo(sala, "olhinho"))
+	var h := c.hp
+	c.levar_tiro(5)
+	checa(c.invulneravel() and c.hp == h, "com olhinho vivo o Olho não leva dano")
+	await desmontar(sala)
+
+
+func teste_olho_volta_a_levar_dano() -> void:
+	var sala := montar("olho_abismo")
+	var c := sala.chefe()
+	await frames(100)
+	ferir_ate(c, 0.6)
+	await frames(10)
+	for v: Variant in sala._inimigos.duplicate():
+		if is_instance_valid(v) and (v as Inimigo).tipo == "olhinho":
+			(v as Inimigo).levar_tiro(99)
+	await frames(2)
+	var h := c.hp
+	c.levar_tiro(2)
+	checa(not c.invulneravel() and c.hp == h - 2, "olhinhos mortos no mesmo quadro: volta a levar dano")
+	await desmontar(sala)
+
+
+func teste_olho_feixe_avisado() -> void:
+	var sala := montar("olho_abismo")
+	var c := sala.chefe()
+	await frames(100)
+	for v: Variant in sala._inimigos.duplicate():
+		if is_instance_valid(v) and v != c:
+			(v as Inimigo).sumir()
+	c.hp = floori(c.hp_max * 0.3)
+	var aviso := 0.0
+	var aviso_antes := -1.0
+	for i in 60 * 10:
+		await physics_frame
+		var e: String = c.call("estado_atual")
+		if e == "feixe":
+			aviso_antes = aviso
+			break
+		aviso = aviso + 1.0 / 60.0 if e == "aviso_feixe" else 0.0
+	checa(aviso_antes >= 0.98, "Olho fase 3: feixe avisado por 1 s (%.2f)" % aviso_antes)
+	await desmontar(sala)
+
+
+func teste_lich_teleporta_leque() -> void:
+	var sala := montar("lich")
+	var c := sala.chefe()
+	var p0 := c.position
+	var longe := false
+	var leque := false
+	for i in 60 * 7:
+		await physics_frame
+		if c.position.distance_to(p0) > 30.0 and not longe:
+			longe = c.position.distance_to(sala.jogador.position) >= 80.0
+		if c.ultima_rajada == 5:
+			leque = true
+			break
+	checa(longe, "Lich teleporta para longe do jogador")
+	checa(leque, "Lich atira leque de 5")
+	await desmontar(sala)
+
+
+func teste_lich_copias() -> void:
+	var sala := montar("lich")
+	var c := sala.chefe()
+	await frames(100)
+	ferir_ate(c, 0.6)
+	await frames(10)
+	checa(vivos_do_tipo(sala, "lich_copia") == 2, "Lich fase 2: 2 cópias (%d)" % vivos_do_tipo(sala, "lich_copia"))
+	c.levar_tiro(1)
+	await frames(3)
+	checa(vivos_do_tipo(sala, "lich_copia") == 0, "cópias somem quando o Lich leva dano")
+	await desmontar(sala)
+
+
+func teste_lich_chuva_com_saida() -> void:
+	var sala := montar("lich")
+	var c := sala.chefe()
+	await frames(100)
+	ferir_ate(c, 0.3)
+	var colunas: Array = []
+	for i in 60 * 10:
+		await physics_frame
+		colunas = c.get("ultima_chuva")
+		if not colunas.is_empty():
+			break
+	var livres := 0
+	var x := 32.0
+	while x <= 288.0:
+		if not x in colunas:
+			livres += 1
+		x += 16.0
+	checa(not colunas.is_empty() and livres >= 1, "Lich fase 3: chuva com coluna livre (%d tiros, %d livres)" % [colunas.size(), livres])
 	await desmontar(sala)

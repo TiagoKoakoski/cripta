@@ -8,16 +8,16 @@ extends CharacterBody2D
 signal morreu(inimigo: Inimigo, tipo: String, pos: Vector2)
 
 const VIDA := {"morcego": 2, "slime": 3, "slime_pequeno": 1, "esqueleto": 3, "rei": 30,
-	"aranha": 2, "fantasma": 3, "olho": 4, "mago": 4}
+	"aranha": 2, "fantasma": 3, "olho": 4, "mago": 4, "olhinho": 3, "lich_copia": 1}
 const SURGIMENTO := 0.5
-const VOADORES := ["morcego", "fantasma"]   # passam por cima dos pilares
+const VOADORES := ["morcego", "fantasma", "olhinho"]   # passam por cima dos pilares
 const COR_MORTE := {"morcego": Color(0.6, 0.4, 0.8), "slime": Color(0.4, 0.8, 0.4),
 	"slime_pequeno": Color(0.5, 0.9, 0.5), "esqueleto": Color(0.9, 0.88, 0.8), "rei": Color(1, 0.8, 0.3),
 	"aranha": Color(1, 0.6, 0.35), "fantasma": Color(0.85, 0.92, 1), "olho": Color(1, 0.4, 0.5),
 	"mago": Color(0.5, 1, 0.8)}
 const SPRITE := {"morcego": "morcego", "slime": "slime", "slime_pequeno": "slime_pequeno",
 	"esqueleto": "esqueleto", "rei": "rei", "aranha": "aranha", "fantasma": "fantasma", "olho": "olho",
-	"mago": "mago"}
+	"mago": "mago", "olhinho": "olho", "lich_copia": "lich"}
 
 var tipo := "morcego"
 var hp := 1
@@ -179,8 +179,10 @@ func _ia(_delta: float) -> void:
 			velocity = _para_jogador() * 28.0
 		"olho":
 			_olho()
-		"mago":
+		"mago", "lich_copia":
 			_mago()
+		"olhinho":
+			velocity = Vector2.ZERO   # quem move é o Olho do Abismo
 
 
 func _para_jogador() -> Vector2:
