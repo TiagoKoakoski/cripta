@@ -405,7 +405,7 @@ def main():
     salvar(pintar([N.TEIA], ("#ffffff", "#c8c8d8")), "poca_teia")
     # subchefes: versões de elite dos inimigos comuns
     salvar(pintar([h.MORCEGO, h.MORCEGO_2], ("#ffd0d0", "#a02040")), "morcego_vampiro")
-    salvar(pintar([N.com_coroa(h.ESQUELETO, (0, 1, 2)) if False else h.ESQUELETO, h.ESQUELETO_2], ("#fff0c0", "#b08030")), "esqueleto_capitao")
+    salvar(pintar([h.ESQUELETO, h.ESQUELETO_2], ("#fff0c0", "#b08030")), "esqueleto_capitao")
     salvar(pintar([N.ARANHA, N.ARANHA_2], ("#f4f4ff", "#7a7a9a")), "aranha_tecela")
     salvar(pintar([N.SLIME_MAE, N.SLIME_MAE_2], ("#e8c8ff", "#7a3aa0")), "slime_rei")
     salvar(pintar([N.MAGO, N.MAGO_2], ("#ff9ad0", "#3a1a4a")), "mago_sombrio")
