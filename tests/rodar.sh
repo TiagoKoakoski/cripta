@@ -8,7 +8,7 @@ for t in tests/teste_*.gd; do
   saida=$(timeout 300 godot --headless --path . --script "res://$t" 2>&1)
   cod=$?
   echo "$saida" | grep -E "Resultado|FALHOU|SCRIPT ERROR|Parse Error" | sed "s|^|$(basename $t): |"
-  [ $cod -ne 0 ] && falhas=$((falhas + 1))
+  if [ $cod -ne 0 ] || echo "$saida" | grep -qE "SCRIPT ERROR|Parse Error"; then falhas=$((falhas + 1)); fi
 done
 echo "== arquivos de teste com falha: $falhas"
 exit $falhas
