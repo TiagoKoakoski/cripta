@@ -61,11 +61,19 @@ static func ponto_de_entrada(entrada: Vector2i) -> Vector2:
 	return Vector2(160, 88)
 
 
+## o corpo de um inimigo (12x10) centrado em p encostaria em algum pilar do layout?
+static func encosta_pilar(p: Vector2, layout: int) -> bool:
+	var corpo := Rect2(p - Vector2(6, 3), Vector2(12, 10))
+	for t: Vector2i in LAYOUTS[layout]:
+		if corpo.intersects(Rect2(Vector2(t * T), Vector2(T, T))):
+			return true
+	return false
+
+
 static func posicoes_inimigos(layout: int, entrada: Vector2i) -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	for p: Vector2 in CANDIDATOS:
-		var tile := Vector2i(int(p.x) / T, int(p.y) / T)
-		if tile in LAYOUTS[layout]:
+		if encosta_pilar(p, layout):
 			continue
 		if entrada != Vector2i.ZERO and p.distance_to(ponto_de_entrada(entrada)) < 80.0:
 			continue
@@ -105,7 +113,9 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 			if e is Dictionary:
 				_criar_inimigo(e["tipo"], e["pos"])
 			else:
-				_criar_inimigo(e, livres[i % livres.size()])
+				# mais inimigos que pontos: os repetidos nascem um pouco deslocados
+				var desloc := Vector2(12, 0).rotated(i) * float(i / livres.size())
+				_criar_inimigo(e, livres[i % livres.size()] + desloc)
 			i += 1
 	_tem_coracao = cfg.get("coracao", false)
 	_trancada = vivos() > 0
@@ -118,7 +128,7 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 func pontos_livres() -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	for p: Vector2 in CANDIDATOS:
-		if _layout < 0 or not Vector2i(int(p.x) / T, int(p.y) / T) in LAYOUTS[_layout]:
+		if _layout < 0 or not encosta_pilar(p, _layout):
 			out.append(p)
 	return out
 
@@ -164,7 +174,7 @@ func _inimigo_morreu(e: Inimigo, t: String, pos: Vector2) -> void:
 	_inimigos.erase(e)
 	if t == "slime":
 		for d: Vector2 in [Vector2(-8, 0), Vector2(8, 0)]:
-			_criar_inimigo("slime_pequeno", pos + d)
+			_criar_inimigo("slime_pequeno", (pos + d).clamp(Vector2(24, 24), Vector2(296, 152)))
 	if t == "rei":
 		chefe_morto.emit()
 	_verificar_limpa.call_deferred()

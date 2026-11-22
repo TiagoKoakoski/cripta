@@ -19,6 +19,7 @@ var explode := false
 var gelo := false
 var _acertados := {}
 var _imune_parede := 0.0
+var _ultimo_quique: Node
 
 
 static func criar(pos: Vector2, dir: Vector2, jogador: bool, dano_: int, vel := 180.0, duracao := 0.6) -> Tiro:
@@ -99,10 +100,11 @@ func _bateu(corpo: Node) -> void:
 	if is_queued_for_deletion():
 		return
 	if corpo is StaticBody2D:
-		if _imune_parede > 0.0:
+		if _imune_parede > 0.0 and corpo == _ultimo_quique:
 			return
 		if ricochetes > 0:
 			ricochetes -= 1
+			_ultimo_quique = corpo
 			_quicar(corpo as StaticBody2D)
 			return
 		queue_free()

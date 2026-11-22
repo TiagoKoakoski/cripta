@@ -14,7 +14,7 @@ func _initialize() -> void:
 func _rodar() -> void:
 	for t: String in ["teste_ricochete", "teste_perfurante", "teste_teleguiado", "teste_explosivo",
 			"teste_explosao_abre_sala", "teste_gelo", "teste_retaguarda", "teste_build_completa_some",
-			"teste_cor_do_tiro"]:
+			"teste_cor_do_tiro", "teste_ricochete_nao_escapa"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -170,4 +170,23 @@ func teste_cor_do_tiro() -> void:
 	sala.partida.gelo = true
 	var gelado := tiro(sala, Vector2(160, 88), Vector2.UP)
 	checa(simples.modulate != gelado.modulate, "tiro muda de cor com o gelo")
+	await desmontar(sala)
+
+
+func teste_ricochete_nao_escapa() -> void:
+	var sala := montar([])
+	sala.partida.ricochete = true
+	var escapou := 0
+	for ang: float in [225.0, 315.0, 45.0, 135.0, 200.0, 340.0]:
+		for origem: Vector2 in [Vector2(40, 40), Vector2(280, 40), Vector2(40, 136), Vector2(280, 136)]:
+			var t := tiro(sala, origem, Vector2.RIGHT.rotated(deg_to_rad(ang)), 1, 180.0, 4.0)
+			for i in 240:
+				await physics_frame
+				if not is_instance_valid(t):
+					break
+				if t.position.x < 0 or t.position.x > 320 or t.position.y < 0 or t.position.y > 176:
+					escapou += 1
+					t.queue_free()
+					break
+	checa(escapou == 0, "ricochete diagonal não atravessa canto (%d escaparam)" % escapou)
 	await desmontar(sala)

@@ -16,7 +16,7 @@ func _rodar() -> void:
 			"teste_invencibilidade", "teste_slime_divide_e_sala_abre", "teste_spawn_longe_da_porta",
 			"teste_parede_segura", "teste_quatro_morcegos_limpam", "teste_porta_trancada",
 			"teste_montar_durante_fisica_tranca",
-			"teste_inimigo_morto_nao_fere", "teste_coracao_ao_limpar", "teste_coracao_vida_cheia", "teste_tremor"]:
+			"teste_inimigo_morto_nao_fere", "teste_coracao_ao_limpar", "teste_coracao_vida_cheia", "teste_tremor", "teste_pontos_sem_pilar"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -252,3 +252,19 @@ func teste_tremor() -> void:
 	await frames(30)
 	checa(mexeu and sala.position == Vector2.ZERO, "levar dano treme a tela e ela volta ao lugar")
 	await desmontar(sala)
+
+
+func teste_pontos_sem_pilar() -> void:
+	var ruins := []
+	for layout in 4:
+		var sala := montar([], 3, Vector2i.DOWN, layout)
+		var pontos: Array = sala.pontos_livres()
+		for e: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			pontos += Sala.posicoes_inimigos(layout, e)
+		for pt: Vector2 in pontos:
+			var corpo := Rect2(pt - Vector2(6, 3), Vector2(12, 10))
+			for t: Vector2i in Sala.LAYOUTS[layout]:
+				if corpo.intersects(Rect2(Vector2(t * 16), Vector2(16, 16))):
+					ruins.append([layout, pt])
+		await desmontar(sala)
+	checa(ruins.is_empty(), "nenhum ponto de nascimento/teleporte encosta em pilar %s" % [ruins])

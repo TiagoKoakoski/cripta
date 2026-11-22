@@ -76,7 +76,8 @@ func levar_tiro(dano: int, dir := Vector2.ZERO) -> void:
 		return
 	hp -= dano
 	_flash = 0.12
-	_empurrao = dir.normalized() * (30.0 if tipo == "rei" else 130.0)
+	if not surgindo():
+		_empurrao = dir.normalized() * (30.0 if tipo == "rei" else 130.0)
 	Sons.tocar("acerto")
 	Efeitos.faisca(get_parent(), position)
 	if hp <= 0:
