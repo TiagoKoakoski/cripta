@@ -61,10 +61,10 @@ func _ia(delta: float) -> void:
 		velocity = Vector2.ZERO
 		return
 	var f := 1 if hp > hp_max * 2 / 3 else (2 if hp > hp_max / 3 else 3)
-	if f > _fase:
-		_fase = f
-		fase_mudou.emit(f)
-		_ao_mudar_fase(f)
+	while _fase < f:   # dano grande de uma vez não pula fase (cada uma tem seu efeito)
+		_fase += 1
+		fase_mudou.emit(_fase)
+		_ao_mudar_fase(_fase)
 	_agir(delta)
 
 

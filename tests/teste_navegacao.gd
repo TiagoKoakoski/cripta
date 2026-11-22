@@ -16,7 +16,8 @@ func _rodar() -> void:
 			"teste_minimapa_revela",
 			"teste_chefe_longe_da_entrada", "teste_minimapa_dentro_do_canto", "teste_dois_tesouros_diferentes",
 			"teste_coracao_persiste", "teste_coracao_sorteado", "teste_hud_itens",
-			"teste_chefe_vira_alcapao", "teste_descer_zera_mapa", "teste_inimigos_do_andar"]:
+			"teste_chefe_vira_alcapao", "teste_descer_zera_mapa", "teste_inimigos_do_andar",
+			"teste_alcapao_nao_engole_parado"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -326,4 +327,20 @@ func teste_inimigos_do_andar() -> void:
 	a.entrar(c, Vector2i.DOWN)
 	await frames(2)
 	checa(a.sala.inimigo_mais_perto().hp == 4, "andar 2: esqueleto com 3 x 1,3 = 4 de vida")
+	await fim(a)
+
+
+func teste_alcapao_nao_engole_parado() -> void:
+	var a := novo_andar()
+	a.entrar(a.mapa["chefe"], Vector2i.DOWN)
+	await frames(3)
+	a.sala.jogador.position = Vector2(160, 90)   # matou o chefe no meio da sala
+	a.sala.inimigo_mais_perto().levar_tiro(999)
+	await frames(10)
+	checa(a.partida.andar_atual == 1 and a.sala.tem_alcapao(), "alçapão que aparece embaixo do jogador não desce sozinho")
+	a.sala.jogador.position = Vector2(160, 140)
+	await frames(4)
+	a.sala.jogador.position = Vector2(160, 88)
+	await frames(5)
+	checa(a.partida.andar_atual == 2, "sair e pisar de novo desce")
 	await fim(a)

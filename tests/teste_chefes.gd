@@ -18,7 +18,8 @@ func _rodar() -> void:
 			"teste_rainha_teia_vira_poca", "teste_rainha_fase2_invoca", "teste_rainha_investida_avisada",
 			"teste_colosso_investe_ate_parede", "teste_colosso_tonto", "teste_colosso_fase3_duas",
 			"teste_olho_espiral", "teste_olho_fase2_olhinhos", "teste_olho_volta_a_levar_dano", "teste_olho_feixe_avisado",
-			"teste_lich_teleporta_leque", "teste_lich_copias", "teste_lich_chuva_com_saida"]:
+			"teste_lich_teleporta_leque", "teste_lich_copias", "teste_lich_chuva_com_saida",
+			"teste_nao_pula_fase"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -408,4 +409,17 @@ func teste_lich_chuva_com_saida() -> void:
 			livres += 1
 		x += 16.0
 	checa(not colunas.is_empty() and livres >= 1, "Lich fase 3: chuva com coluna livre (%d tiros, %d livres)" % [colunas.size(), livres])
+	await desmontar(sala)
+
+
+func teste_nao_pula_fase() -> void:
+	var sala := montar("olho_abismo")
+	var c := sala.chefe()
+	var fases := []
+	c.fase_mudou.connect(func(n: int) -> void: fases.append(n))
+	await frames(10)
+	c.levar_tiro(c.hp - floori(c.hp_max * 0.3))   # dano grande ainda durante o surgimento/espera
+	await frames(120)
+	checa(fases == [2, 3], "dano grande de uma vez passa pelas fases 2 e 3 (%s)" % [fases])
+	checa(vivos_do_tipo(sala, "olhinho") == 4, "e a fase 2 do Olho acontece (olhinhos %d)" % vivos_do_tipo(sala, "olhinho"))
 	await desmontar(sala)

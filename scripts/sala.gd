@@ -42,6 +42,7 @@ var _layout := -1
 var _tem_coracao := false   # esta sala solta (ou guarda) um coração quando limpa
 var _coracao: Area2D
 var _alcapao: Area2D
+var _alcapao_armado := false   # só desce depois de o jogador pisar (não se ele já estava em cima)
 var _mult_vida := 1.0
 var _tema := "cripta"
 var _inimigos: Array = []  # registrados na criação (podem entrar na árvore um quadro depois)
@@ -314,8 +315,12 @@ func mostrar_alcapao() -> void:
 	r.size = Vector2(12, 12)
 	c.shape = r
 	_alcapao.add_child(c)
+	_alcapao_armado = jogador == null or jogador.position.distance_to(_alcapao.position) > 16.0
+	_alcapao.body_exited.connect(func(corpo: Node) -> void:
+		if corpo is Jogador:
+			_alcapao_armado = true)
 	_alcapao.body_entered.connect(func(corpo: Node) -> void:
-		if corpo is Jogador and not partida.morto():
+		if corpo is Jogador and not partida.morto() and _alcapao_armado:
 			alcapao_pisado.emit())
 	add_child.call_deferred(_alcapao)
 

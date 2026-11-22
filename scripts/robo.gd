@@ -17,6 +17,7 @@ var _acabou := false
 var _hp_alvo := -1
 var _sem_progresso := 0.0
 var _reposicionar := Vector2.ZERO
+var _no_alcapao := 0.0
 
 
 func _init(m: Node) -> void:
@@ -120,7 +121,11 @@ func _jogar(delta: float) -> void:
 		elif dist > 90.0:
 			destino = alvo.position
 	elif sala.tem_alcapao():
-		destino = Vector2(160, 88)
+		# o alçapão só desce se o jogador pisar nele vindo de fora: parado em cima, sai e volta
+		_no_alcapao = _no_alcapao + delta if j.position.distance_to(Vector2(160, 88)) < 10.0 else 0.0
+		destino = Vector2(160, 130) if _no_alcapao > 0.4 else Vector2(160, 88)
+		if _no_alcapao > 1.6:
+			_no_alcapao = 0.0
 	elif not sala.objeto_usado() and sala.tipo in [GeradorAndar.TESOURO, GeradorAndar.FONTE] \
 			and (sala.tipo == GeradorAndar.TESOURO or main.partida.vida < main.partida.vida_max):
 		destino = Vector2(160, 92)
