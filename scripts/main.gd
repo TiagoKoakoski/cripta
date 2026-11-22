@@ -1,4 +1,5 @@
-## Fluxo do jogo: título (escolhe o personagem) -> partida (3 andares) -> fim ou vitória -> título.
+## Fluxo do jogo: título (escolhe o personagem) -> história -> partida (3 andares, com transição a cada
+## subida) -> fim, ou final da história e vitória -> título.
 ## Modo de teste: godot --path . -- --autoplay --capturas=/pasta  (um robô joga e fotografa)
 extends Node2D
 
@@ -14,6 +15,10 @@ const RESUMO := {"atirador": "atira a luz do farol", "espadachim": "golpe em arc
 var _tela: Node2D
 var _espera := 0.0
 var _robo: Node
+var _cartao: Cartao
+
+const ANDAR_TEXTO := {2: "A cripta ficou para trás. Acima, o ossuário das Catacumbas range sob o peso dos ossos.",
+	3: "O ar esfria. No topo da torre, o céu rasgado: o Abismo engole as últimas estrelas."}
 
 
 func _ready() -> void:
@@ -44,6 +49,13 @@ func _unhandled_input(evento: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	_espera = maxf(0.0, _espera - delta)
+	if estado in ["historia", "transicao", "final"]:
+		if _cartao and is_instance_valid(_cartao):
+			for a: String in ["confirmar", "atirar_cima", "atirar_baixo", "atirar_esquerda", "atirar_direita"]:
+				if Input.is_action_just_pressed(a) or (Input.is_action_pressed(a) and _robo):
+					_cartao.avancar()
+					break
+		return
 	# só as telas (título, fim, vitória) aceitam botão; "terminando" é a pausa da morte/vitória
 	if not estado in ["titulo", "fim", "vitoria"] or _espera > 0.0:
 		return
@@ -56,7 +68,7 @@ func _process(delta: float) -> void:
 				return
 		for a: String in ["confirmar", "atirar_cima", "atirar_baixo"]:
 			if Input.is_action_just_pressed(a) or (Input.is_action_pressed(a) and _robo):
-				comecar()
+				_abertura()
 				return
 		return
 	# fim / vitória: qualquer botão volta ao título
@@ -64,6 +76,24 @@ func _process(delta: float) -> void:
 		if Input.is_action_just_pressed(a) or (Input.is_action_pressed(a) and _robo):
 			_mostrar_tela("titulo")
 			return
+
+
+func _nome_curto() -> String:
+	return (NOMES[Partida.PERSONAGENS[selecionado]] as String).split(",")[0].capitalize()
+
+
+func _abertura() -> void:
+	if _tela:
+		_tela.queue_free()
+		_tela = null
+	estado = "historia"
+	var quem := _nome_curto()
+	_cartao = Cartao.mostrar(self, [
+		{"titulo": "VALE-CINZA", "texto": "Numa noite sem estrelas, uma torre negra brotou do cemitério e rachou a velha cripta ao meio.", "de": 0, "para": 0},
+		{"titulo": "O LICH VESPER", "texto": "No alto da torre ele rasgou o céu. O Abismo engole as estrelas, uma a uma. Quando a última apagar, os mortos levantam.", "de": 0, "para": 0},
+		{"titulo": "ANDAR 1 — CRIPTA", "texto": "%s entra pela cripta. É preciso subir." % quem, "de": 0, "para": 1},
+	], Partida.PERSONAGENS[selecionado], 4.0)
+	_cartao.terminou.connect(comecar)
 
 
 func comecar() -> void:
@@ -83,9 +113,28 @@ func comecar() -> void:
 			andar.chefe_forcado = a.split("=", true, 1)[1]
 	add_child(andar)
 	andar.iniciar(partida, semente)
+	andar.subida_externa = true
+	andar.pediu_subida.connect(_transicao)
 	andar.derrota.connect(_terminar.bind(false))
 	andar.vitoria.connect(_terminar.bind(true))
 	estado = "jogando"
+
+
+func _transicao() -> void:
+	if estado != "jogando" or andar == null:
+		return
+	estado = "transicao"
+	var para := partida.andar_atual + 1
+	var info := Andares.info(para)
+	andar.process_mode = Node.PROCESS_MODE_DISABLED
+	_cartao = Cartao.mostrar(self, [{"titulo": "ANDAR %d — %s" % [para, info["nome"]], "texto": ANDAR_TEXTO.get(para, ""),
+		"de": para - 1, "para": para}], partida.personagem, 2.5)
+	_cartao.terminou.connect(func() -> void:
+		if andar == null:
+			return
+		andar.process_mode = Node.PROCESS_MODE_INHERIT
+		andar.subir()
+		estado = "jogando")
 
 
 func _terminar(vitoria: bool) -> void:
@@ -98,7 +147,16 @@ func _terminar(vitoria: bool) -> void:
 	if andar:
 		andar.queue_free()
 		andar = null
-	_mostrar_tela("vitoria" if vitoria else "fim")
+	if not vitoria:
+		_mostrar_tela("fim")
+		return
+	estado = "final"
+	var quem := _nome_curto()
+	_cartao = Cartao.mostrar(self, [
+		{"titulo": "A FENDA SE FECHA", "texto": "Vesper cai. Devagar, o rasgo no céu se costura, e a primeira estrela volta a brilhar.", "de": 3, "para": 3},
+		{"titulo": "AMANHECER", "texto": "As estrelas voltam a Vale-Cinza. %s desce a torre morta enquanto o sol nasce." % quem, "de": 3, "para": 0},
+	], partida.personagem, 4.0)
+	_cartao.terminou.connect(func() -> void: _mostrar_tela("vitoria"))
 
 
 func _mostrar_tela(qual: String, com_espera := true) -> void:

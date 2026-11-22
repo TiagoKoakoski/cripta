@@ -22,7 +22,13 @@ func _rodar() -> void:
 	await apertar("mover_esquerda")
 	checa(main.selecionado == 0, "esquerda volta ao atirador")
 	await apertar("confirmar")
-	checa(main.estado == "jogando" and main.andar != null, "confirmar começa a partida")
+	checa(main.estado == "historia" and main.andar == null, "confirmar abre a história da abertura")
+	var paginas := 0
+	while main.estado == "historia" and paginas < 6:
+		await apertar("confirmar")
+		await frames(30)   # o último cartão some num esmaecer de 0,4 s
+		paginas += 1
+	checa(paginas == 3 and main.estado == "jogando" and main.andar != null, "3 cartões da abertura e começa a partida (%d)" % paginas)
 	var semente1: int = main.partida.semente
 	main.partida.pegar_item("espada")
 	main.partida.pegar_item("botas")
@@ -35,7 +41,7 @@ func _rodar() -> void:
 	checa(main.partida.recorde >= 1, "recorde gravado")
 	await apertar("confirmar")
 	checa(main.estado == "titulo" and main.selecionado == 0, "botão na tela de fim volta ao título, mesmo personagem")
-	await apertar("confirmar")
+	await comecar(main)
 	checa(main.estado == "jogando", "confirmar no título recomeça")
 	checa([main.partida.dano, main.partida.velocidade, main.partida.vida, main.partida.itens_pegos.size()]
 		== [1, Partida.VELOCIDADE, 3, 0], "recomeço zera a build")
@@ -61,7 +67,7 @@ func _rodar() -> void:
 	checa(main.estado == "fim", "e a tela de fim aparece")
 	# vitória: vencer os chefes dos 3 andares (subindo pelas escadas) leva à tela de vitória
 	await apertar("confirmar")
-	await apertar("confirmar")
+	await comecar(main)
 	checa(main.estado == "jogando", "nova partida")
 	for n in 3:
 		main.andar.entrar(main.andar.mapa["chefe"], Vector2i.DOWN)
@@ -72,9 +78,20 @@ func _rodar() -> void:
 			checa(main.estado == "jogando" and main.andar.sala.tem_escada(), "andar %d: escada" % (n + 1))
 			main.andar.sala.jogador.position = Vector2(160, 88)
 			await frames(5)
-			checa(main.partida.andar_atual == n + 2, "subiu ao andar %d" % (n + 2))
+			checa(main.estado == "transicao" and main.partida.andar_atual == n + 1, "escada abre a transição (ainda no andar %d)" % (n + 1))
+			Input.action_press("confirmar")   # segurar o botão não pode pular 2 andares
+			await frames(60 * 4)
+			Input.action_release("confirmar")
+			await frames(30)
+			checa(main.estado == "jogando" and main.partida.andar_atual == n + 2, "transição termina no andar %d" % (n + 2))
 	await frames(90)
-	checa(main.estado == "vitoria", "chefe do andar 3 mostra a vitória (estado %s)" % main.estado)
+	checa(main.estado == "final", "chefe do andar 3 mostra o final da história (estado %s)" % main.estado)
+	var finais := 0
+	while main.estado == "final" and finais < 5:
+		await apertar("confirmar")
+		await frames(30)
+		finais += 1
+	checa(finais == 2 and main.estado == "vitoria", "2 cartões finais e a tela de vitória (%d)" % finais)
 	checa(main.partida.recorde >= 300, "vitória vale 300+ no recorde")
 	checa(main.arquivo_para(["--autoplay"]) == "user://progresso_robo.cfg" and main.arquivo_para([]) == "user://progresso.cfg",
 		"robô grava recorde em arquivo próprio")
@@ -82,7 +99,7 @@ func _rodar() -> void:
 	await apertar("confirmar")
 	checa(main.estado == "titulo", "vitória volta ao título")
 	await apertar("atirar_direita")
-	await apertar("confirmar")
+	await comecar(main)
 	checa(main.partida.personagem == "espadachim" and main.partida.vida == 4 and main.partida.andar_atual == 1
 		and main.partida.itens_pegos.is_empty(), "espadachim começa com 4 de vida, andar 1, sem itens")
 	main.partida.vida = 1
@@ -107,6 +124,15 @@ func checa(cond: bool, rotulo: String) -> void:
 func frames(n: int) -> void:
 	for i in n:
 		await physics_frame
+
+
+## título -> confirmar -> pula os cartões da abertura
+func comecar(main: Node) -> void:
+	await apertar("confirmar")
+	var n := 0
+	while main.estado == "historia" and n < 6:
+		await apertar("confirmar")
+		n += 1
 
 
 func apertar(acao: String) -> void:

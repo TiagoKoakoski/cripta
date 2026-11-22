@@ -7,6 +7,7 @@ signal derrota
 signal sala_mudou(posicao: Vector2i)
 signal chefe_vencido
 signal subiu
+signal pediu_subida   # com subida_externa, quem decide quando subir é o main (transição)
 
 var partida: Partida
 var mapa: Dictionary
@@ -16,7 +17,8 @@ var hud: Hud
 var visitadas := {}
 var _cfg := {}   # Vector2i -> dicionário de configuração da sala (fixo para o andar)
 var chefe_forcado := ""
-var subchefe_forcado := ""   # --chefe=<nome> e testes; vazio = sorteado da tabela do andar
+var subchefe_forcado := ""
+var subida_externa := false   # --chefe=<nome> e testes; vazio = sorteado da tabela do andar
 var _semente := 0
 
 
@@ -110,9 +112,20 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 		else:
 			sala.mostrar_escada()
 			chefe_vencido.emit())
-	sala.escada_pisada.connect(_subir, CONNECT_DEFERRED)
+	sala.escada_pisada.connect(_escada_pisada, CONNECT_DEFERRED)
 	add_child(sala)
 	sala_mudou.emit(pos)
+
+
+func _escada_pisada() -> void:
+	if subida_externa:
+		pediu_subida.emit()
+	else:
+		_subir()
+
+
+func subir() -> void:
+	_subir()
 
 
 func _subir() -> void:

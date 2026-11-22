@@ -66,6 +66,9 @@ func _physics_process(delta: float) -> void:
 				print("robô: terminou em %s com %s no andar %d, pontos %d, recorde %d" % [main.estado,
 					main.partida.personagem, main.partida.andar_atual, main.partida.pontos(), main.partida.recorde])
 				get_tree().quit(0)
+		"historia", "transicao", "final":
+			_soltar()
+			Input.action_press("confirmar")
 		"jogando":
 			Input.action_release("confirmar")
 			_jogar(delta)
