@@ -88,8 +88,12 @@ func _atirar(dir: Vector2) -> void:
 	if partida.tiro_triplo:
 		dirs.append(dir.rotated(deg_to_rad(15)))
 		dirs.append(dir.rotated(deg_to_rad(-15)))
+	if partida.retaguarda:
+		dirs.append(-dir)
 	for d: Vector2 in dirs:
-		sala.add_child(Tiro.criar(position + dir * 8.0, d, true, partida.dano, vel, dur))
+		var t := Tiro.criar(position + d * 8.0, d, true, partida.dano, vel, dur)
+		t.aplicar_build(partida)
+		sala.add_child(t)
 	Sons.tocar("tiro")
 
 

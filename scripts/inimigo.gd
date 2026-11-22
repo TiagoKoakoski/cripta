@@ -6,6 +6,8 @@ extends CharacterBody2D
 signal morreu(inimigo: Inimigo, tipo: String, pos: Vector2)
 
 const VIDA := {"morcego": 2, "slime": 3, "slime_pequeno": 1, "esqueleto": 3, "rei": 30}
+const COR_MORTE := {"morcego": Color(0.6, 0.4, 0.8), "slime": Color(0.4, 0.8, 0.4),
+	"slime_pequeno": Color(0.5, 0.9, 0.5), "esqueleto": Color(0.9, 0.88, 0.8), "rei": Color(1, 0.8, 0.3)}
 const SPRITE := {"morcego": "morcego", "slime": "slime", "slime_pequeno": "slime_pequeno",
 	"esqueleto": "esqueleto", "rei": "rei"}
 
@@ -22,6 +24,8 @@ var _flash := 0.0
 var _sprite: Sprite2D
 var _rng := RandomNumberGenerator.new()
 var _morto := false
+var lento := 0.0          # segundos de lentidão (gelo)
+var _empurrao := Vector2.ZERO
 
 
 static func criar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, semente: int) -> Inimigo:
@@ -54,17 +58,24 @@ static func criar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, 
 	return e
 
 
-func levar_tiro(dano: int) -> void:
+func levar_tiro(dano: int, dir := Vector2.ZERO) -> void:
 	if _morto:
 		return
 	hp -= dano
 	_flash = 0.12
+	_empurrao = dir.normalized() * (30.0 if tipo == "rei" else 130.0)
 	Sons.tocar("acerto")
+	Efeitos.faisca(get_parent(), position)
 	if hp <= 0:
 		_morto = true
 		Sons.tocar("morte_inimigo")
+		Efeitos.morte(get_parent(), position, COR_MORTE.get(tipo, Color.WHITE))
 		morreu.emit(self, tipo, position)
 		queue_free()
+
+
+func congelar(segundos: float) -> void:
+	lento = maxf(lento, segundos)
 
 
 func vivo() -> bool:
@@ -78,7 +89,13 @@ func _physics_process(delta: float) -> void:
 	_anim += delta
 	_sprite.frame = int(_anim * 5.0) % 2
 	_flash = maxf(0.0, _flash - delta)
-	_sprite.modulate = Color(1, 0.4, 0.4) if _flash > 0.0 else Color.WHITE
+	lento = maxf(0.0, lento - delta)
+	if _flash > 0.0:
+		_sprite.modulate = Color(1, 0.4, 0.4)
+	elif lento > 0.0:
+		_sprite.modulate = Color(0.6, 0.8, 1.0)
+	else:
+		_sprite.modulate = Color.WHITE
 	match tipo:
 		"morcego":
 			_morcego()
@@ -88,6 +105,10 @@ func _physics_process(delta: float) -> void:
 			_esqueleto()
 		"rei":
 			_rei()
+	if lento > 0.0:
+		velocity *= 0.5
+	velocity += _empurrao
+	_empurrao = _empurrao.move_toward(Vector2.ZERO, 900.0 * delta)
 	move_and_slide()
 
 
