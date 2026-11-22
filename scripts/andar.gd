@@ -37,11 +37,24 @@ func iniciar(p: Partida, semente: int) -> void:
 
 
 func _sortear_inimigos(rng: RandomNumberGenerator, dist: int) -> Array:
-	var n := clampi(1 + dist, 2, 4)
-	var tipos := ["morcego", "slime"] if dist <= 1 else ["morcego", "slime", "esqueleto"]
+	return Andar.sortear_inimigos(rng, dist)
+
+
+## perto do início: morcego/slime/aranha; no meio entram esqueleto/fantasma/olho; longe, o mago.
+## Atiradores (olho, mago) no máximo 1 de cada por sala.
+static func sortear_inimigos(rng: RandomNumberGenerator, dist: int) -> Array:
+	var n := clampi(1 + dist, 2, 5)
+	var tipos := ["morcego", "slime", "aranha"]
+	if dist >= 2:
+		tipos += ["esqueleto", "fantasma", "olho"]
+	if dist >= 4:
+		tipos += ["mago"]
 	var out := []
 	for i in n:
-		out.append(tipos[rng.randi_range(0, tipos.size() - 1)])
+		var t: String = tipos[rng.randi_range(0, tipos.size() - 1)]
+		if t in ["olho", "mago"] and t in out:
+			t = "morcego"
+		out.append(t)
 	return out
 
 

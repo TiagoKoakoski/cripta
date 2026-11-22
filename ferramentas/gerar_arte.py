@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 import sprites_base as B
+import sprites_novos as N
 
 RAIZ = Path(__file__).resolve().parent.parent
 ARTE = RAIZ / "arte"
@@ -34,6 +35,11 @@ PALETAS = {
     "item": ("#fff2b0", "#c8a040"),
     "fonte": ("#bfe8ff", "#4a8fc0"),
     "porta": ("#d8c8b0", "#6a5040"),
+    "aranha": ("#ffb070", "#7a3a2a"),
+    "fantasma": ("#e8f4ff", "#8aa8c8"),
+    "olho": ("#fff0f0", "#c03050"),
+    "mago": ("#a0ffd0", "#3a5a8a"),
+    "tocha": ("#ffe080", "#a06030"),
 }
 
 
@@ -147,8 +153,16 @@ def main():
     salvar(pintar([h.CORACAO_CHEIO, h.CORACAO_VAZIO], PALETAS["coracao"]), "coracao")
     salvar(pintar([h.FONTE], PALETAS["fonte"]), "fonte")
     salvar(pintar([PEDESTAL], PALETAS["porta"]), "pedestal")
+    salvar(pintar([N.ARANHA, N.ARANHA_2], PALETAS["aranha"]), "aranha")
+    salvar(pintar([N.FANTASMA, N.FANTASMA_2], PALETAS["fantasma"]), "fantasma")
+    salvar(pintar([N.OLHO, N.OLHO_2], PALETAS["olho"]), "olho")
+    salvar(pintar([N.MAGO, N.MAGO_2], PALETAS["mago"]), "mago")
+    salvar(pintar([N.TOCHA, N.TOCHA_2], PALETAS["tocha"]), "tocha")
+    salvar(pintar([h.CORACAO_CHEIO], PALETAS["coracao"]), "coracao_chao")
     itens = {"espada": h.ITEM_FORTE, "raio": h.ITEM_GATILHO, "coracao_extra": h.ITEM_CORACAO,
-             "botas": h.ITEM_BOTAS, "tiro_triplo": TRIPLO, "alcance": ALCANCE}
+             "botas": h.ITEM_BOTAS, "tiro_triplo": TRIPLO, "alcance": ALCANCE,
+             "ricochete": N.ITEM_RICOCHETE, "perfurante": N.ITEM_PERFURANTE, "teleguiado": N.ITEM_TELEGUIADO,
+             "explosivo": N.ITEM_EXPLOSIVO, "gelo": N.ITEM_GELO, "retaguarda": N.ITEM_RETAGUARDA}
     for n, f in itens.items():
         salvar(pintar([f], PALETAS["item"]), f"item_{n}")
     salvar(icone(h.CAVEIRA12, ("#ece6d8", "#a89c8a")), "icone_combate")

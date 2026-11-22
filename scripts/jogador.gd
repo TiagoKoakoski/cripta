@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 	_passo += delta * (1.0 if mover != Vector2.ZERO else 0.0)
 	_animar()
 	for corpo: Node2D in _corpo.get_overlapping_bodies():
-		if corpo is Inimigo and (corpo as Inimigo).vivo():
+		if corpo is Inimigo and (corpo as Inimigo).perigoso():
 			ferir()
 			break
 

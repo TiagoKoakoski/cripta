@@ -1,15 +1,23 @@
 ## Inimigos: morcego (mergulha e recua, voa por cima de pilares), slime (anda à toa; o grande se
-## divide em 2 pequenos), esqueleto (parado, atira no jogador), rei (chefe).
+## divide em 2 pequenos), esqueleto (parado, atira no jogador), aranha (saltos curtos), fantasma
+## (persegue atravessando pilares), olho (rajadas em cruz e em X), mago (teletransporta e atira
+## leque), rei (chefe). Todo inimigo leva SURGIMENTO s para aparecer, sem agir nem ferir.
 class_name Inimigo
 extends CharacterBody2D
 
 signal morreu(inimigo: Inimigo, tipo: String, pos: Vector2)
 
-const VIDA := {"morcego": 2, "slime": 3, "slime_pequeno": 1, "esqueleto": 3, "rei": 30}
+const VIDA := {"morcego": 2, "slime": 3, "slime_pequeno": 1, "esqueleto": 3, "rei": 30,
+	"aranha": 2, "fantasma": 3, "olho": 4, "mago": 4}
+const SURGIMENTO := 0.5
+const VOADORES := ["morcego", "fantasma"]   # passam por cima dos pilares
 const COR_MORTE := {"morcego": Color(0.6, 0.4, 0.8), "slime": Color(0.4, 0.8, 0.4),
-	"slime_pequeno": Color(0.5, 0.9, 0.5), "esqueleto": Color(0.9, 0.88, 0.8), "rei": Color(1, 0.8, 0.3)}
+	"slime_pequeno": Color(0.5, 0.9, 0.5), "esqueleto": Color(0.9, 0.88, 0.8), "rei": Color(1, 0.8, 0.3),
+	"aranha": Color(1, 0.6, 0.35), "fantasma": Color(0.85, 0.92, 1), "olho": Color(1, 0.4, 0.5),
+	"mago": Color(0.5, 1, 0.8)}
 const SPRITE := {"morcego": "morcego", "slime": "slime", "slime_pequeno": "slime_pequeno",
-	"esqueleto": "esqueleto", "rei": "rei"}
+	"esqueleto": "esqueleto", "rei": "rei", "aranha": "aranha", "fantasma": "fantasma", "olho": "olho",
+	"mago": "mago"}
 
 var tipo := "morcego"
 var hp := 1
@@ -26,6 +34,8 @@ var _rng := RandomNumberGenerator.new()
 var _morto := false
 var lento := 0.0          # segundos de lentidão (gelo)
 var _empurrao := Vector2.ZERO
+var _surgindo := SURGIMENTO
+var _volta := 0           # olho: alterna cruz / X
 
 
 static func criar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, semente: int) -> Inimigo:
@@ -43,7 +53,7 @@ static func criar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, 
 		e._t = 1.0  # o Rei dá um respiro antes de atacar
 	e.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	e.collision_layer = Camadas.INIMIGO
-	e.collision_mask = Camadas.PAREDE if tipo_ == "morcego" else Camadas.PAREDE | Camadas.PILAR
+	e.collision_mask = Camadas.PAREDE if tipo_ in VOADORES else Camadas.PAREDE | Camadas.PILAR
 	e._sprite = Sprite2D.new()
 	e._sprite.texture = load("res://arte/%s.png" % SPRITE[tipo_])
 	e._sprite.hframes = 2
@@ -82,8 +92,22 @@ func vivo() -> bool:
 	return not _morto
 
 
+func surgindo() -> bool:
+	return _surgindo > 0.0
+
+
+## pode ferir o jogador por contato
+func perigoso() -> bool:
+	return vivo() and not surgindo()
+
+
 func _physics_process(delta: float) -> void:
 	if _morto or jogador == null:
+		return
+	if _surgindo > 0.0:
+		_surgindo = maxf(0.0, _surgindo - delta)
+		_sprite.modulate = Color(1, 1, 1, 0.3 + 0.7 * float(int(_surgindo * 20.0) % 2))
+		velocity = Vector2.ZERO
 		return
 	_t -= delta
 	_anim += delta
@@ -96,6 +120,8 @@ func _physics_process(delta: float) -> void:
 		_sprite.modulate = Color(0.6, 0.8, 1.0)
 	else:
 		_sprite.modulate = Color.WHITE
+	if tipo == "fantasma":
+		_sprite.modulate.a = 0.55 + 0.2 * sin(_anim * 4.0)
 	match tipo:
 		"morcego":
 			_morcego()
@@ -105,11 +131,20 @@ func _physics_process(delta: float) -> void:
 			_esqueleto()
 		"rei":
 			_rei()
+		"aranha":
+			_aranha()
+		"fantasma":
+			velocity = _para_jogador() * 28.0
+		"olho":
+			_olho()
+		"mago":
+			_mago()
 	if lento > 0.0:
 		velocity *= 0.5
 	velocity += _empurrao
 	_empurrao = _empurrao.move_toward(Vector2.ZERO, 900.0 * delta)
 	move_and_slide()
+	position = position.clamp(Vector2(20, 20), Vector2(300, 156))  # nunca fora da área jogável
 
 
 func _para_jogador() -> Vector2:
@@ -173,3 +208,66 @@ func _rei() -> void:
 					sala.add_child(Tiro.criar(position + d * 10.0, d, false, 1, 80.0, 3.0))
 				Sons.tocar("acerto")
 				_estado = "pausa"
+
+
+func _aranha() -> void:
+	match _estado:
+		"pausa":
+			velocity = Vector2.ZERO
+			if _t <= 0.0:
+				_estado = "salto"
+				_t = 0.22
+				_dir = _para_jogador().rotated(_rng.randf_range(-0.5, 0.5))
+		"salto":
+			velocity = _dir * 170.0
+			if _t <= 0.0:
+				_estado = "pausa"
+				_t = _rng.randf_range(0.45, 0.8)
+
+
+func _olho() -> void:
+	velocity = Vector2.ZERO
+	if _t <= 0.0:
+		_t = 1.4
+		var base := 0.0 if _volta % 2 == 0 else PI / 4.0
+		_volta += 1
+		for i in 4:
+			var d := Vector2.RIGHT.rotated(base + PI / 2.0 * i)
+			sala.add_child(Tiro.criar(position + d * 9.0, d, false, 1, 75.0, 3.0))
+
+
+func _mago() -> void:
+	velocity = Vector2.ZERO
+	match _estado:
+		"pausa":
+			if _t <= 0.0:
+				_estado = "sumir"
+				_t = 0.35
+		"sumir":
+			_sprite.modulate.a = clampf(_t / 0.35, 0.0, 1.0)
+			if _t <= 0.0:
+				position = _ponto_de_teleporte()
+				_estado = "aparecer"
+				_t = 0.35
+		"aparecer":
+			_sprite.modulate.a = clampf(1.0 - _t / 0.35, 0.0, 1.0)
+			if _t <= 0.0:
+				var alvo := _para_jogador()
+				for a: float in [-0.32, 0.0, 0.32]:
+					var d := alvo.rotated(a)
+					sala.add_child(Tiro.criar(position + d * 9.0, d, false, 1, 85.0, 3.0))
+				_estado = "pausa"
+				_t = 1.6
+
+
+func _ponto_de_teleporte() -> Vector2:
+	var pontos: Array = sala.call("pontos_livres") if sala.has_method("pontos_livres") else [position]
+	var bons: Array = pontos.filter(func(p: Vector2) -> bool:
+		return p.distance_to(jogador.position) >= 80.0 and p.distance_to(position) >= 40.0)
+	if bons.is_empty():
+		var longe: Vector2 = position
+		for p: Vector2 in pontos:
+			if p.distance_to(jogador.position) > longe.distance_to(jogador.position):
+				longe = p
+		return longe
+	return bons[_rng.randi_range(0, bons.size() - 1)]

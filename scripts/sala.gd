@@ -36,6 +36,7 @@ var _objeto: Node2D
 var _item := ""
 var _fonte_usada := false
 var _rng := RandomNumberGenerator.new()
+var _layout := -1
 var _inimigos: Array = []  # registrados na criação (podem entrar na árvore um quadro depois)
 
 
@@ -77,6 +78,7 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 	_rng.seed = cfg.get("semente", 1)
 	var layout: int = cfg.get("layout", 0) if tipo == GeradorAndar.COMBATE else -1
 	var entrada: Vector2i = cfg.get("entrada", Vector2i.ZERO)
+	_layout = layout
 	_montar_chao_e_paredes(cfg.get("portas", {}), layout)
 	jogador = Jogador.criar(partida, self, ponto_de_entrada(entrada))
 	jogador.morreu.connect(func() -> void: jogador_morreu.emit())
@@ -103,6 +105,15 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 			i += 1
 	_trancada = vivos() > 0
 	_atualizar_portas()
+
+
+## pontos de chão sem pilar (o mago teletransporta para um deles)
+func pontos_livres() -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	for p: Vector2 in CANDIDATOS:
+		if _layout < 0 or not Vector2i(int(p.x) / T, int(p.y) / T) in LAYOUTS[_layout]:
+			out.append(p)
+	return out
 
 
 func vivos() -> int:
