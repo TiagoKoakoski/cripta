@@ -36,7 +36,7 @@ var _objeto: Node2D
 var _item := ""
 var _fonte_usada := false
 var _rng := RandomNumberGenerator.new()
-var _inimigos: Array[Inimigo] = []  # registrados na criação (podem entrar na árvore um quadro depois)
+var _inimigos: Array = []  # registrados na criação (podem entrar na árvore um quadro depois)
 
 
 static func centro_porta(d: Vector2i) -> Vector2:
@@ -105,8 +105,8 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 
 func vivos() -> int:
 	var n := 0
-	for e: Inimigo in _inimigos:
-		if is_instance_valid(e) and e.vivo():
+	for e: Variant in _inimigos:
+		if is_instance_valid(e) and (e as Inimigo).vivo():
 			n += 1
 	return n
 
@@ -121,8 +121,9 @@ func tiros_do_jogador() -> Array:
 
 func inimigo_mais_perto() -> Inimigo:
 	var melhor: Inimigo = null
-	for e: Inimigo in _inimigos:
-		if is_instance_valid(e) and e.vivo():
+	for v: Variant in _inimigos:
+		if is_instance_valid(v) and (v as Inimigo).vivo():
+			var e := v as Inimigo
 			if melhor == null or jogador.position.distance_to(e.position) < jogador.position.distance_to(melhor.position):
 				melhor = e
 	return melhor
@@ -139,7 +140,8 @@ func _criar_inimigo(t: String, pos: Vector2) -> void:
 		add_child(e)
 
 
-func _inimigo_morreu(_e: Inimigo, t: String, pos: Vector2) -> void:
+func _inimigo_morreu(e: Inimigo, t: String, pos: Vector2) -> void:
+	_inimigos.erase(e)
 	if t == "slime":
 		for d: Vector2 in [Vector2(-8, 0), Vector2(8, 0)]:
 			_criar_inimigo("slime_pequeno", pos + d)
