@@ -22,9 +22,21 @@ const DESCRICOES_ESPADACHIM := {"tiro_triplo": "golpe em arco largo", "alcance":
 	"gelo": "o golpe congela", "retaguarda": "golpeia também para trás"}
 
 
+const DESCRICOES_ALQUIMISTA := {"tiro_triplo": "3 frascos em leque", "alcance": "frasco mais longe, explosão maior",
+	"ricochete": "o frasco quica e explode de novo", "perfurante": "a explosão deixa fogo",
+	"teleguiado": "o frasco cai no inimigo mais perto", "explosivo": "explosão maior",
+	"gelo": "a explosão congela", "retaguarda": "um frasco também para trás"}
+const DESCRICOES_CACADOR := {"tiro_triplo": "2 bumerangues", "alcance": "bumerangue vai mais longe",
+	"ricochete": "bumerangue volta mais rápido", "perfurante": "bumerangue atravessa paredes",
+	"teleguiado": "bumerangue curva para inimigos", "explosivo": "explode quando vira",
+	"gelo": "o bumerangue congela", "retaguarda": "um bumerangue para trás"}
+
+
 static func descricao(item: String, quem: String) -> String:
-	if quem == "espadachim" and DESCRICOES_ESPADACHIM.has(item):
-		return DESCRICOES_ESPADACHIM[item]
+	var tabela: Dictionary = {"espadachim": DESCRICOES_ESPADACHIM, "alquimista": DESCRICOES_ALQUIMISTA,
+		"cacador": DESCRICOES_CACADOR}.get(quem, {})
+	if tabela.has(item):
+		return tabela[item]
 	return DESCRICOES.get(item, "")
 
 

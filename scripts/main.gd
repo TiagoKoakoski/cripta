@@ -7,6 +7,10 @@ var partida: Partida
 var andar: Andar
 var arquivo_recorde := "user://progresso.cfg"
 var selecionado := 0       # índice em Partida.PERSONAGENS
+const NOMES := {"atirador": "IARA, A ATIRADORA", "espadachim": "BENTO, O ESPADACHIM",
+	"alquimista": "LÚCIO, O ALQUIMISTA", "cacador": "CAUÃ, O CAÇADOR"}
+const RESUMO := {"atirador": "atira a luz do farol", "espadachim": "golpe em arco, corta tiros",
+	"alquimista": "frascos que explodem em área", "cacador": "bumerangue que vai e volta"}
 var _tela: Node2D
 var _espera := 0.0
 var _robo: Node
@@ -112,13 +116,14 @@ func _mostrar_tela(qual: String, com_espera := true) -> void:
 	if qual == "titulo":
 		for i in Partida.PERSONAGENS.size():
 			var r := Sprite2D.new()
-			r.texture = load("res://arte/%s.png" % ("heroi" if i == 0 else "espadachim"))
+			r.texture = load("res://arte/%s.png" % Jogador.sprite_de(Partida.PERSONAGENS[i]))
 			r.hframes = 8
 			r.scale = Vector2(2, 2) if i == selecionado else Vector2(1.5, 1.5)
 			r.modulate = Color.WHITE if i == selecionado else Color(0.45, 0.42, 0.5)
-			r.position = Vector2(130 + i * 60, 92)
+			r.position = Vector2(85 + i * 50, 84)
 			_tela.add_child(r)
-		_texto("<  %s  >" % Partida.PERSONAGENS[selecionado].to_upper(), Vector2(0, 112))
+		_texto("<  %s  >" % NOMES[quem], Vector2(0, 104))
+		_texto(RESUMO[quem], Vector2(0, 114))
 	else:
 		_texto("ANDAR %d" % partida.andar_atual, Vector2(0, 80))
 		_imagem("icone_combate", Vector2(130, 104))

@@ -5,9 +5,10 @@ extends RefCounted
 const ITENS: Array[String] = ["espada", "raio", "coracao_extra", "botas", "tiro_triplo", "alcance",
 	"ricochete", "perfurante", "teleguiado", "explosivo", "gelo", "retaguarda"]
 const ITENS_DE_TIRO: Array[String] = ["ricochete", "perfurante", "teleguiado", "explosivo", "gelo", "retaguarda"]
-const PERSONAGENS: Array[String] = ["atirador", "espadachim"]
+const PERSONAGENS: Array[String] = ["atirador", "espadachim", "alquimista", "cacador"]
 ## vida, velocidade, dano, cadência de cada personagem
-const BASE := {"atirador": [3, 70.0, 1, 0.4], "espadachim": [4, 80.0, 2, 0.45]}
+const BASE := {"atirador": [3, 70.0, 1, 0.4], "espadachim": [4, 80.0, 2, 0.45], "alquimista": [3, 70.0, 2, 0.7],
+	"cacador": [3, 85.0, 1, 0.45]}
 const VERSAO_SAVE := 3
 const VIDA_INICIAL := 3
 const VIDA_MAXIMA := 8

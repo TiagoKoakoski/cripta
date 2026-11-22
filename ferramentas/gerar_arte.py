@@ -403,6 +403,12 @@ def main():
     salvar(pintar([N.OLHO, N.OLHO_2], ("#d0f6ff", "#2a6a9a")), "olho_abismo")
     salvar(pintar([N.LICH, N.LICH_2], ("#e0c8ff", "#4a2a7a")), "lich")
     salvar(pintar([N.TEIA], ("#ffffff", "#c8c8d8")), "poca_teia")
+    herois = [h.HEROI_BAIXO, h.HEROI_BAIXO_2, h.HEROI_DIR, h.HEROI_DIR_2, h.HEROI_CIMA, h.HEROI_CIMA_2,
+              h.espelhar(h.HEROI_DIR), h.espelhar(h.HEROI_DIR_2)]
+    salvar(pintar(herois, ("#d8ffc8", "#3a8a5a")), "alquimista")
+    salvar(pintar(herois, ("#f0e0b0", "#7a5a30")), "cacador")
+    salvar(pintar([N.FRASCO], ("#d0ffd0", "#3ac060")), "frasco")
+    salvar(pintar([N.BUMERANGUE], ("#f4ecd8", "#a88a5a")), "bumerangue")
     salvar(pintar([N.CAVALEIRO, N.CAVALEIRO_2], ("#ffb060", "#5a6a8a")), "cavaleiro")
     salvar(pintar([N.VERME, N.VERME_2], ("#f0e6cc", "#8a6a4a")), "verme")
     salvar(pintar([h.HEROI_BAIXO, h.HEROI_BAIXO_2], ("#b8a8e0", "#2a1a4a")), "sombra_gemea")

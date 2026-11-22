@@ -20,14 +20,18 @@ static func criar(p: Partida, sala_: Node2D, pos: Vector2) -> Jogador:
 	var j := Jogador.new()
 	j.partida = p
 	j.sala = sala_
-	j.arma = ArmaLamina.new() if p.personagem == "espadachim" else ArmaTiro.new()
+	match p.personagem:
+		"espadachim": j.arma = ArmaLamina.new()
+		"alquimista": j.arma = ArmaFrasco.new()
+		"cacador": j.arma = ArmaBumerangue.new()
+		_: j.arma = ArmaTiro.new()
 	j.position = pos
 	j.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	j.collision_layer = Camadas.JOGADOR
 	j.collision_mask = Camadas.PAREDE | Camadas.PILAR
 	Efeitos.sombra_para(j, 1.0)
 	j._sprite = Sprite2D.new()
-	j._sprite.texture = load("res://arte/%s.png" % ("espadachim" if p.personagem == "espadachim" else "heroi"))
+	j._sprite.texture = load("res://arte/%s.png" % Jogador.sprite_de(p.personagem))
 	j._sprite.hframes = 8
 	j.add_child(j._sprite)
 	var c := CollisionShape2D.new()
@@ -48,6 +52,10 @@ static func criar(p: Partida, sala_: Node2D, pos: Vector2) -> Jogador:
 	j.add_child(j._corpo)
 	j.add_to_group("jogador")
 	return j
+
+
+static func sprite_de(quem: String) -> String:
+	return "heroi" if quem == "atirador" else quem
 
 
 func _physics_process(delta: float) -> void:
