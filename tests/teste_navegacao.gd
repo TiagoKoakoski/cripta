@@ -13,7 +13,8 @@ func _initialize() -> void:
 func _rodar() -> void:
 	for t: String in ["teste_porta_muda_sala", "teste_sala_limpa_continua_limpa", "teste_item_uma_vez",
 			"teste_fonte_uma_vez", "teste_chefe_morto_vence", "teste_morte_derrota", "teste_hud",
-			"teste_minimapa_revela"]:
+			"teste_minimapa_revela",
+			"teste_chefe_longe_da_entrada", "teste_minimapa_dentro_do_canto"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -186,3 +187,35 @@ func teste_minimapa_revela() -> void:
 	checa(vistas.size() == 1 + GeradorAndar.vizinhos(a.mapa["salas"], a.posicao).size(),
 		"minimapa: sala atual + vizinhas")
 	await fim(a)
+
+
+func teste_chefe_longe_da_entrada() -> void:
+	for entrada: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		var a := novo_andar()
+		a.partida.vida = 6
+		a.partida.vida_max = 6
+		a.entrar(a.mapa["chefe"], entrada)
+		await frames(2)
+		var rei: Inimigo = a.sala.inimigo_mais_perto()
+		var dist := rei.position.distance_to(a.sala.jogador.position)
+		var t := 0
+		while a.partida.vida == 6 and t < 180:
+			await physics_frame
+			t += 1
+		checa(dist >= 80.0 and t >= 60, "chefe entrando por %s: %.0f px, 1º dano em %d quadros" % [entrada, dist, t])
+		await fim(a)
+
+
+func teste_minimapa_dentro_do_canto() -> void:
+	for semente in 30:
+		var a := novo_andar(semente)
+		for p: Vector2i in a.mapa["salas"]:
+			a.entrar(p, Vector2i.DOWN)
+			for r: Rect2 in a.hud.retangulos_mapa():
+				var tela := Rect2(r.position + a.hud.origem_mapa(), r.size)
+				if not Rect2(244, 0, 76, 40).encloses(tela):
+					checa(false, "minimapa fora do canto: %s" % tela)
+					await fim(a)
+					return
+		await fim(a)
+	checa(true, "minimapa sempre no canto superior direito")

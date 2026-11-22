@@ -12,6 +12,8 @@ var _robo: Node
 
 
 func _ready() -> void:
+	arquivo_recorde = arquivo_para(OS.get_cmdline_user_args()) if arquivo_recorde == "user://recorde.cfg" \
+		else arquivo_recorde
 	partida = Partida.new()
 	partida.arquivo_recorde = arquivo_recorde
 	partida.carregar_recorde()
@@ -19,6 +21,17 @@ func _ready() -> void:
 		_robo = load("res://scripts/robo.gd").new(self)
 		add_child(_robo)
 	_mostrar_tela("titulo")
+
+
+## o robô (--autoplay) nunca mexe no recorde de quem joga
+func arquivo_para(args: PackedStringArray) -> String:
+	return "user://recorde_robo.cfg" if args.has("--autoplay") else "user://recorde.cfg"
+
+
+func _unhandled_input(evento: InputEvent) -> void:
+	if evento is InputEventKey and (evento as InputEventKey).pressed \
+			and (evento as InputEventKey).physical_keycode == KEY_ESCAPE:
+		get_tree().quit()
 
 
 func _process(delta: float) -> void:

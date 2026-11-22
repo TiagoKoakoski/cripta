@@ -24,7 +24,7 @@ func _init(p: Partida, a: Node) -> void:
 		add_child(s)
 		_coracoes.append(s)
 	_mapa = Node2D.new()
-	_mapa.position = Vector2(290, 14)
+	_mapa.position = origem_mapa()
 	_mapa.draw.connect(_desenhar_mapa)
 	add_child(_mapa)
 
@@ -48,15 +48,40 @@ func coracoes_visiveis() -> Array[int]:
 	return [cheios, total]
 
 
-func _desenhar_mapa() -> void:
+const ALCANCE_MAPA := Vector2i(3, 2)  # salas mostradas em volta da atual (cabe no canto)
+
+
+func origem_mapa() -> Vector2:
+	return Vector2(290, 18)
+
+
+## retângulos do minimapa (relativos à origem) com a cor de cada sala conhecida perto da atual
+func retangulos_mapa() -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	for item: Array in _itens_mapa():
+		out.append(item[0])
+	return out
+
+
+func _itens_mapa() -> Array:
 	var tam := Vector2(7, 5)
 	var atual: Vector2i = andar.posicao
+	var out := []
 	for p: Vector2i in andar.salas_conhecidas():
-		var r := Rect2(Vector2(p - atual) * (tam + Vector2(1, 1)) - tam / 2.0, tam)
+		var d := p - atual
+		if absi(d.x) > ALCANCE_MAPA.x or absi(d.y) > ALCANCE_MAPA.y:
+			continue
+		var r := Rect2(Vector2(d) * (tam + Vector2(1, 1)) - tam / 2.0, tam)
 		var tipo: int = andar.mapa["salas"][p]
 		var cor: Color = CORES_MAPA[tipo]
 		if not andar.visitadas.has(p) and tipo == GeradorAndar.COMBATE:
 			cor = cor.darkened(0.5)
-		_mapa.draw_rect(r, cor)
-		if p == atual:
-			_mapa.draw_rect(r, Color.WHITE, false, 1.0)
+		out.append([r, cor, p == atual])
+	return out
+
+
+func _desenhar_mapa() -> void:
+	for item: Array in _itens_mapa():
+		_mapa.draw_rect(item[0], item[1])
+		if item[2]:
+			_mapa.draw_rect(item[0], Color.WHITE, false, 1.0)

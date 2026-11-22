@@ -89,7 +89,9 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 		_fonte_usada = limpa_antes
 		_criar_objeto("fonte", "")
 	elif tipo == GeradorAndar.CHEFE and not limpa_antes:
-		_criar_inimigo("rei", Vector2(160, 60))
+		# o Rei nasce do lado oposto à porta de entrada (nunca colado no jogador)
+		var lado := -entrada if entrada != Vector2i.ZERO else Vector2i.UP
+		_criar_inimigo("rei", ponto_de_entrada(lado))
 	if not limpa_antes and tipo == GeradorAndar.COMBATE:
 		var livres := posicoes_inimigos(maxi(layout, 0), entrada)
 		var i := 0

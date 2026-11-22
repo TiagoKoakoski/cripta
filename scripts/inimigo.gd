@@ -34,6 +34,9 @@ static func criar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, 
 	e.sala = sala_
 	e._rng.seed = semente
 	e._t = e._rng.randf_range(0.3, 0.9)  # cada um começa num ritmo
+	if tipo_ == "rei":
+		e._estado = "espera"
+		e._t = 1.0  # o Rei dá um respiro antes de atacar
 	e.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	e.collision_layer = Camadas.INIMIGO
 	e.collision_mask = Camadas.PAREDE if tipo_ == "morcego" else Camadas.PAREDE | Camadas.PILAR
@@ -128,6 +131,10 @@ func _esqueleto() -> void:
 
 func _rei() -> void:
 	match _estado:
+		"espera":
+			velocity = Vector2.ZERO
+			if _t <= 0.0:
+				_estado = "pausa"
 		"pausa", "perseguir":
 			if _estado == "pausa":
 				_estado = "perseguir"

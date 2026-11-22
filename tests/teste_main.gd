@@ -61,6 +61,7 @@ func _rodar() -> void:
 	await frames(90)
 	checa(main.estado == "vitoria", "matar o Rei mostra a vitória (estado %s)" % main.estado)
 	checa(main.partida.recorde >= 100, "vitória vale +100 no recorde")
+	checa(main.arquivo_para(["--autoplay"]) != main.arquivo_para([]), "robô grava recorde em arquivo próprio")
 	main.partida.apagar_recorde()
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)

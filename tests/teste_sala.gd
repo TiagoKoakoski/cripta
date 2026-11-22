@@ -15,7 +15,8 @@ func _rodar() -> void:
 	for t: String in ["teste_tiro_na_direcao", "teste_morcego_morre_e_sala_abre", "teste_esqueleto_atira",
 			"teste_invencibilidade", "teste_slime_divide_e_sala_abre", "teste_spawn_longe_da_porta",
 			"teste_parede_segura", "teste_quatro_morcegos_limpam", "teste_porta_trancada",
-			"teste_montar_durante_fisica_tranca"]:
+			"teste_montar_durante_fisica_tranca",
+			"teste_inimigo_morto_nao_fere"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -191,4 +192,15 @@ func teste_montar_durante_fisica_tranca() -> void:
 	await physics_frame
 	var sala := montar([{"tipo": "morcego", "pos": Vector2(60, 40)}, {"tipo": "slime", "pos": Vector2(260, 40)}])
 	checa(sala.vivos() == 2 and not sala.aberta(), "montada na física: conta 2 e tranca (vivos %d)" % sala.vivos())
+	await desmontar(sala)
+
+
+func teste_inimigo_morto_nao_fere() -> void:
+	var sala := montar([{"tipo": "morcego", "pos": Vector2(160, 142)}], 6)
+	sala.partida.invencivel = 0.0
+	var m: Inimigo = sala.inimigo_mais_perto()
+	m.position = sala.jogador.position
+	m.levar_tiro(99)   # morre colado no jogador; o corpo só sai da árvore no fim do quadro
+	await frames(1)
+	checa(sala.partida.vida == 6, "inimigo que acabou de morrer não fere (vida %d)" % sala.partida.vida)
 	await desmontar(sala)
