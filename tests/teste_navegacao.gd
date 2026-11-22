@@ -157,7 +157,7 @@ func teste_chefe_morto_vence() -> void:
 	a.entrar(a.mapa["chefe"], Vector2i.DOWN)
 	await frames(3)
 	var rei: Inimigo = a.sala.inimigo_mais_perto()
-	checa(rei != null and rei.tipo == "rei" and rei.hp == 30, "sala do chefe tem o Rei com 30")
+	checa(rei is Chefe and rei.hp == rei.hp_max, "sala do chefe tem um chefe")
 	rei.levar_tiro(99)
 	await frames(5)
 	checa(venceu[0], "matar o Rei vence")

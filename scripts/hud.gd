@@ -34,6 +34,8 @@ var _mapa: Node2D
 var _icones: Node2D
 var _aviso: Label
 var _aviso_t := 0.0
+var _barra: Node2D
+var _nome_chefe: Label
 
 
 func _init(p: Partida, a: Node) -> void:
@@ -60,6 +62,18 @@ func _init(p: Partida, a: Node) -> void:
 	_aviso.add_theme_constant_override("outline_size", 3)
 	_aviso.visible = false
 	add_child(_aviso)
+	_barra = Node2D.new()
+	_barra.draw.connect(_desenhar_barra)
+	add_child(_barra)
+	_nome_chefe = Label.new()
+	_nome_chefe.position = Vector2(100, -1)
+	_nome_chefe.size = Vector2(120, 10)
+	_nome_chefe.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_nome_chefe.add_theme_font_size_override("font_size", 8)
+	_nome_chefe.add_theme_color_override("font_color", Color(1, 0.85, 0.85))
+	_nome_chefe.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.1))
+	_nome_chefe.add_theme_constant_override("outline_size", 3)
+	add_child(_nome_chefe)
 	_mapa = Node2D.new()
 	_mapa.position = origem_mapa()
 	_mapa.draw.connect(_desenhar_mapa)
@@ -74,6 +88,29 @@ func anunciar(item: String) -> void:
 	_aviso.visible = true
 	_aviso.modulate.a = 1.0
 	_aviso_t = 2.5
+
+
+## [visível, fração de vida, nome] do chefe vivo na sala atual
+func barra_chefe() -> Array:
+	var s: Variant = andar.get("sala") if andar else null
+	if s == null or not is_instance_valid(s) or not s.has_method("chefe"):
+		return [false, 0.0, ""]
+	var c: Chefe = s.chefe()
+	if c == null:
+		return [false, 0.0, ""]
+	return [true, float(c.hp) / c.hp_max, c.nome_exibido]
+
+
+func _desenhar_barra() -> void:
+	var b := barra_chefe()
+	_nome_chefe.visible = b[0]
+	if not b[0]:
+		return
+	_nome_chefe.text = b[2]
+	var r := Rect2(100, 11, 120, 5)
+	_barra.draw_rect(r.grow(1), Color(0.08, 0.05, 0.1))
+	_barra.draw_rect(r, Color(0.25, 0.1, 0.12))
+	_barra.draw_rect(Rect2(r.position, Vector2(r.size.x * b[1], r.size.y)), Color(0.85, 0.2, 0.25))
 
 
 func mensagem() -> String:
@@ -109,6 +146,7 @@ func _process(d: float) -> void:
 		_coracoes[i].visible = i < partida.vida_max
 		_coracoes[i].frame = 0 if i < partida.vida else 1
 	_mapa.queue_redraw()
+	_barra.queue_redraw()
 
 
 ## [cheios, total] visíveis

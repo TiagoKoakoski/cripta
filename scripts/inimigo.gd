@@ -40,44 +40,74 @@ var _volta := 0           # olho: alterna cruz / X
 
 static func criar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, semente: int) -> Inimigo:
 	var e := Inimigo.new()
-	e.tipo = tipo_
-	e.hp = VIDA[tipo_]
-	e.hp_max = e.hp
-	e.position = pos
-	e.jogador = jogador_
-	e.sala = sala_
-	e._rng.seed = semente
-	e._t = e._rng.randf_range(0.3, 0.9)  # cada um começa num ritmo
-	if tipo_ == "rei":
-		e._estado = "espera"
-		e._t = 1.0  # o Rei dá um respiro antes de atacar
-	e.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
-	e.collision_layer = Camadas.INIMIGO
-	e.collision_mask = Camadas.PAREDE if tipo_ in VOADORES else Camadas.PAREDE | Camadas.PILAR
-	Efeitos.sombra_para(e, 6.0 if tipo_ in VOADORES else 0.0)
-	e._sprite = Sprite2D.new()
-	e._sprite.texture = load("res://arte/%s.png" % SPRITE[tipo_])
-	e._sprite.hframes = 2
-	if tipo_ == "rei":
-		e._sprite.scale = Vector2(1.5, 1.5)
-	e.add_child(e._sprite)
+	e._montar(tipo_, pos, jogador_, sala_, semente)
+	return e
+
+
+static func textura(nome: String) -> Texture2D:
+	var caminho := "res://arte/%s.png" % SPRITE.get(nome, nome)
+	return load(caminho) if ResourceLoader.exists(caminho) else load("res://arte/rei.png")
+
+
+func _montar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, semente: int) -> void:
+	tipo = tipo_
+	hp = VIDA.get(tipo_, 1)
+	hp_max = hp
+	position = pos
+	jogador = jogador_
+	sala = sala_
+	_rng.seed = semente
+	_t = _rng.randf_range(0.3, 0.9)  # cada um começa num ritmo
+	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	collision_layer = Camadas.INIMIGO
+	collision_mask = Camadas.PAREDE if tipo_ in VOADORES else Camadas.PAREDE | Camadas.PILAR
+	Efeitos.sombra_para(self, 6.0 if tipo_ in VOADORES else 0.0)
+	_sprite = Sprite2D.new()
+	_sprite.texture = Inimigo.textura(tipo_)
+	_sprite.hframes = 2
+	add_child(_sprite)
 	var c := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
-	r.size = Vector2(18, 15) if tipo_ == "rei" else (Vector2(12, 10) if tipo_ != "slime_pequeno" else Vector2(8, 7))
+	r.size = Vector2(12, 10) if tipo_ != "slime_pequeno" else Vector2(8, 7)
 	c.shape = r
 	c.position = Vector2(0, 2)
-	e.add_child(c)
-	e.add_to_group("inimigo")
-	return e
+	c.name = "Corpo"
+	add_child(c)
+	add_to_group("inimigo")
+
+
+## chefes sobrescrevem: invulnerável não leva dano; fator multiplica o dano; empurrão recebido
+func invulneravel() -> bool:
+	return false
+
+
+func _fator_dano() -> float:
+	return 1.0
+
+
+func _forca_empurrao() -> float:
+	return 130.0
+
+
+## some sem "morrer" (sem sinal, sem dividir): usado quando o chefe cai e leva os invocados junto
+func sumir() -> void:
+	if _morto:
+		return
+	_morto = true
+	Efeitos.morte(get_parent(), position, COR_MORTE.get(tipo, Color.WHITE))
+	queue_free()
 
 
 func levar_tiro(dano: int, dir := Vector2.ZERO) -> void:
 	if _morto:
 		return
-	hp -= dano
+	if invulneravel():
+		Efeitos.faisca(get_parent(), position, Color(0.6, 0.6, 0.7))
+		return
+	hp -= ceili(dano * _fator_dano())
 	_flash = 0.12
 	if not surgindo():
-		_empurrao = dir.normalized() * (30.0 if tipo == "rei" else 130.0)
+		_empurrao = dir.normalized() * _forca_empurrao()
 	Sons.tocar("acerto")
 	Efeitos.faisca(get_parent(), position)
 	if hp <= 0:
@@ -126,6 +156,16 @@ func _physics_process(delta: float) -> void:
 		_sprite.modulate = Color.WHITE
 	if tipo == "fantasma":
 		_sprite.modulate.a = 0.55 + 0.2 * sin(_anim * 4.0)
+	_ia(delta)
+	if lento > 0.0:
+		velocity *= 0.5
+	velocity += _empurrao
+	_empurrao = _empurrao.move_toward(Vector2.ZERO, 900.0 * delta)
+	move_and_slide()
+	position = position.clamp(Vector2(20, 20), Vector2(300, 156))  # nunca fora da área jogável
+
+
+func _ia(_delta: float) -> void:
 	match tipo:
 		"morcego":
 			_morcego()
@@ -133,8 +173,6 @@ func _physics_process(delta: float) -> void:
 			_slime()
 		"esqueleto":
 			_esqueleto()
-		"rei":
-			_rei()
 		"aranha":
 			_aranha()
 		"fantasma":
@@ -143,12 +181,6 @@ func _physics_process(delta: float) -> void:
 			_olho()
 		"mago":
 			_mago()
-	if lento > 0.0:
-		velocity *= 0.5
-	velocity += _empurrao
-	_empurrao = _empurrao.move_toward(Vector2.ZERO, 900.0 * delta)
-	move_and_slide()
-	position = position.clamp(Vector2(20, 20), Vector2(300, 156))  # nunca fora da área jogável
 
 
 func _para_jogador() -> Vector2:
@@ -187,31 +219,6 @@ func _esqueleto() -> void:
 	if _t <= 0.0:
 		_t = _rng.randf_range(1.8, 2.4)
 		sala.add_child(Tiro.criar(position + _para_jogador() * 8.0, _para_jogador(), false, 1, 90.0, 3.0))
-
-
-func _rei() -> void:
-	match _estado:
-		"espera":
-			velocity = Vector2.ZERO
-			if _t <= 0.0:
-				_estado = "pausa"
-		"pausa", "perseguir":
-			if _estado == "pausa":
-				_estado = "perseguir"
-				_t = 2.0
-			velocity = _para_jogador() * (40.0 if hp > hp_max / 2 else 55.0)
-			if _t <= 0.0:
-				_estado = "rajada"
-				_t = 0.6
-		"rajada":
-			velocity = Vector2.ZERO
-			if _t <= 0.0:
-				var n := 4 if hp > hp_max / 2 else 8
-				for i in n:
-					var d := Vector2.RIGHT.rotated(TAU * i / n)
-					sala.add_child(Tiro.criar(position + d * 10.0, d, false, 1, 80.0, 3.0))
-				Sons.tocar("acerto")
-				_estado = "pausa"
 
 
 func _aranha() -> void:

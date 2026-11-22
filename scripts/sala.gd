@@ -165,16 +165,44 @@ func inimigo_mais_perto() -> Inimigo:
 	return melhor
 
 
-## por ora todo chefe é o Rei (os outros chegam com os scripts de chefe)
-func _criar_chefe(_nome: String, pos: Vector2) -> void:
-	_criar_inimigo("rei", pos)
+func _criar_chefe(nome: String, pos: Vector2) -> void:
+	_registrar(Chefe.criar_chefe(nome, pos, jogador, self, _rng.randi()))
+
+
+func chefe() -> Chefe:
+	for v: Variant in _inimigos:
+		if is_instance_valid(v) and v is Chefe and (v as Chefe).vivo():
+			return v
+	return null
+
+
+var _invocados: Array = []
+
+
+## inimigo chamado pelo chefe: conta para trancar a sala e some quando o chefe cai
+func invocar(t: String, pos: Vector2) -> void:
+	var e := Inimigo.criar(t, pos.clamp(Vector2(24, 24), Vector2(296, 152)), jogador, self, _rng.randi())
+	_invocados.append(e)
+	_registrar(e)
+
+
+func invocados_vivos(t: String) -> int:
+	var n := 0
+	for v: Variant in _invocados:
+		if is_instance_valid(v) and (v as Inimigo).vivo() and (v as Inimigo).tipo == t:
+			n += 1
+	return n
 
 
 func _criar_inimigo(t: String, pos: Vector2) -> void:
 	var e := Inimigo.criar(t, pos, jogador, self, _rng.randi())
-	if t != "rei" and _mult_vida != 1.0:
+	if _mult_vida != 1.0:
 		e.hp = ceili(e.hp * _mult_vida)
 		e.hp_max = e.hp
+	_registrar(e)
+
+
+func _registrar(e: Inimigo) -> void:
 	e.morreu.connect(_inimigo_morreu)
 	_inimigos.append(e)
 	# durante a física (morte por tiro) não dá pra adicionar corpos na hora
@@ -189,7 +217,11 @@ func _inimigo_morreu(e: Inimigo, t: String, pos: Vector2) -> void:
 	if t == "slime":
 		for d: Vector2 in [Vector2(-8, 0), Vector2(8, 0)]:
 			_criar_inimigo("slime_pequeno", (pos + d).clamp(Vector2(24, 24), Vector2(296, 152)))
-	if t == "rei":
+	if e is Chefe:
+		for v: Variant in _inimigos.duplicate():
+			if is_instance_valid(v) and v in _invocados:
+				(v as Inimigo).sumir()
+				_inimigos.erase(v)
 		chefe_morto.emit()
 	_verificar_limpa.call_deferred()
 
