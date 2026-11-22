@@ -4,7 +4,8 @@ extends CanvasLayer
 
 const CORES_MAPA := {GeradorAndar.INICIO: Color(0.55, 0.5, 0.6), GeradorAndar.COMBATE: Color(0.45, 0.4, 0.5),
 	GeradorAndar.TESOURO: Color(0.88, 0.7, 0.25), GeradorAndar.FONTE: Color(0.3, 0.6, 0.85),
-	GeradorAndar.CHEFE: Color(0.85, 0.25, 0.3)}
+	GeradorAndar.CHEFE: Color(0.85, 0.25, 0.3), GeradorAndar.SUBCHEFE: Color(0.75, 0.45, 0.2)}
+const COR_DESCONHECIDA := Color(0.32, 0.3, 0.36)
 
 const NOMES := {"espada": "ESPADA", "raio": "RAIO", "coracao_extra": "CORAÇÃO", "botas": "BOTAS",
 	"tiro_triplo": "TIRO TRIPLO", "alcance": "ALCANCE", "ricochete": "RICOCHETE", "perfurante": "PERFURANTE",
@@ -35,6 +36,7 @@ var _icones: Node2D
 var _aviso: Label
 var _aviso_t := 0.0
 var _barra: Node2D
+var _icone_chave: Sprite2D
 var _nome_chefe: Label
 
 
@@ -62,6 +64,11 @@ func _init(p: Partida, a: Node) -> void:
 	_aviso.add_theme_constant_override("outline_size", 3)
 	_aviso.visible = false
 	add_child(_aviso)
+	_icone_chave = Sprite2D.new()
+	_icone_chave.texture = load("res://arte/chave.png")
+	_icone_chave.position = Vector2(10, 18)
+	_icone_chave.visible = false
+	add_child(_icone_chave)
 	_barra = Node2D.new()
 	_barra.draw.connect(_desenhar_barra)
 	add_child(_barra)
@@ -84,7 +91,11 @@ func _init(p: Partida, a: Node) -> void:
 func anunciar(item: String) -> void:
 	if not NOMES.has(item):
 		return
-	_aviso.text = "%s\n%s" % [NOMES[item], Hud.descricao(item, partida.personagem)]
+	anunciar_texto(NOMES[item], Hud.descricao(item, partida.personagem))
+
+
+func anunciar_texto(titulo: String, linha: String) -> void:
+	_aviso.text = "%s\n%s" % [titulo, linha]
 	_aviso.visible = true
 	_aviso.modulate.a = 1.0
 	_aviso_t = 2.5
@@ -147,6 +158,7 @@ func _process(d: float) -> void:
 		_coracoes[i].frame = 0 if i < partida.vida else 1
 	_mapa.queue_redraw()
 	_barra.queue_redraw()
+	_icone_chave.visible = partida.tem_chave
 
 
 ## [cheios, total] visíveis
@@ -185,12 +197,17 @@ func _itens_mapa() -> Array:
 		if absi(d.x) > ALCANCE_MAPA.x or absi(d.y) > ALCANCE_MAPA.y:
 			continue
 		var r := Rect2(Vector2(d) * (tam + Vector2(1, 1)) - tam / 2.0, tam)
-		var tipo: int = andar.mapa["salas"][p]
-		var cor: Color = CORES_MAPA[tipo]
-		if not andar.visitadas.has(p) and tipo == GeradorAndar.COMBATE:
-			cor = cor.darkened(0.5)
+		var cor := cor_sala(p)
 		out.append([r, cor, p == atual])
 	return out
+
+
+## cor da sala no minimapa: o tipo só aparece depois de visitar (o chefe aparece com a chave)
+func cor_sala(p: Vector2i) -> Color:
+	var tipo: int = andar.mapa["salas"][p]
+	if andar.visitadas.has(p) or (tipo == GeradorAndar.CHEFE and partida.tem_chave):
+		return CORES_MAPA[tipo]
+	return COR_DESCONHECIDA
 
 
 func _desenhar_mapa() -> void:

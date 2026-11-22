@@ -9,7 +9,9 @@ signal item_pego(item: String)
 signal jogador_morreu
 signal chefe_morto
 signal coracao_pego
-signal alcapao_pisado
+signal escada_pisada
+signal chave_caiu
+signal chave_pega
 
 const T := 16
 const COLS := 20
@@ -41,8 +43,11 @@ var _rng := RandomNumberGenerator.new()
 var _layout := -1
 var _tem_coracao := false   # esta sala solta (ou guarda) um coração quando limpa
 var _coracao: Area2D
-var _alcapao: Area2D
-var _alcapao_armado := false   # só desce depois de o jogador pisar (não se ele já estava em cima)
+var _escada: Area2D
+var _chave: Area2D
+var _chefe_trancado := false
+var _tipo_porta := {}   # Vector2i -> tipo da sala vizinha
+var _escada_armado := false   # só sobe depois de o jogador pisar (não se ele já estava em cima)
 var _mult_vida := 1.0
 var _tema := "cripta"
 var _inimigos: Array = []  # registrados na criação (podem entrar na árvore um quadro depois)
@@ -97,6 +102,7 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 	_layout = layout
 	_mult_vida = cfg.get("mult_vida", 1.0)
 	_tema = cfg.get("tema", "cripta")
+	_chefe_trancado = cfg.get("chefe_trancado", false)
 	_montar_chao_e_paredes(cfg.get("portas", {}), layout)
 	jogador = Jogador.criar(partida, self, ponto_de_entrada(entrada))
 	jogador.morreu.connect(func() -> void: jogador_morreu.emit())
@@ -113,8 +119,13 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 		# o chefe nasce do lado oposto à porta de entrada (nunca colado no jogador)
 		var lado := -entrada if entrada != Vector2i.ZERO else Vector2i.UP
 		_criar_chefe(cfg.get("chefe", "rei"), ponto_de_entrada(lado))
-	elif tipo == GeradorAndar.CHEFE and cfg.get("alcapao", false):
-		mostrar_alcapao()
+	elif tipo == GeradorAndar.CHEFE and cfg.get("escada", false):
+		mostrar_escada()
+	elif tipo == GeradorAndar.SUBCHEFE and not limpa_antes:
+		var lado := -entrada if entrada != Vector2i.ZERO else Vector2i.UP
+		_criar_chefe(cfg.get("subchefe", "morcego_vampiro"), ponto_de_entrada(lado))
+	elif tipo == GeradorAndar.SUBCHEFE and cfg.get("chave", false):
+		_soltar_chave()
 	if not limpa_antes and tipo == GeradorAndar.COMBATE:
 		var livres := posicoes_inimigos(maxi(layout, 0), entrada)
 		var i := 0
@@ -220,7 +231,9 @@ func _inimigo_morreu(e: Inimigo, t: String, pos: Vector2) -> void:
 	if t == "slime":
 		for d: Vector2 in [Vector2(-8, 0), Vector2(8, 0)]:
 			_criar_inimigo("slime_pequeno", (pos + d).clamp(Vector2(24, 24), Vector2(296, 152)))
-	if e is Chefe:
+	if e is Chefe and (e as Chefe).fases == 2:
+		pass   # subchefe: a chave cai quando a sala fica limpa (o Slime Rei deixa filhos)
+	elif e is Chefe:
 		for v: Variant in _inimigos.duplicate():
 			if is_instance_valid(v) and v in _invocados:
 				(v as Inimigo).sumir()
@@ -235,6 +248,9 @@ func _verificar_limpa() -> void:
 		_atualizar_portas()
 		Sons.tocar("porta")
 		limpa.emit()
+		if tipo == GeradorAndar.SUBCHEFE:
+			_soltar_chave()
+			chave_caiu.emit()
 		if _tem_coracao:
 			_soltar_coracao.call_deferred()
 
@@ -295,34 +311,74 @@ func tremer() -> void:
 	_tremor.tween_property(self, "position", Vector2.ZERO, 0.035)
 
 
-func tem_alcapao() -> bool:
-	return _alcapao != null and is_instance_valid(_alcapao)
+func chave_no_chao() -> bool:
+	return _chave != null and is_instance_valid(_chave) and not _chave.is_queued_for_deletion()
 
 
-func mostrar_alcapao() -> void:
-	if tem_alcapao():
+func _soltar_chave() -> void:
+	if chave_no_chao():
 		return
-	_alcapao = Area2D.new()
-	_alcapao.position = Vector2(160, 88)
-	_alcapao.collision_layer = 0
-	_alcapao.collision_mask = Camadas.JOGADOR
+	_chave = Area2D.new()
+	_chave.position = Vector2(160, 88)
+	_chave.collision_layer = 0
+	_chave.collision_mask = Camadas.JOGADOR
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/alcapao.png")
-	s.z_index = -5
-	_alcapao.add_child(s)
+	s.texture = load("res://arte/chave.png")
+	_chave.add_child(s)
 	var c := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
 	r.size = Vector2(12, 12)
 	c.shape = r
-	_alcapao.add_child(c)
-	_alcapao_armado = jogador == null or jogador.position.distance_to(_alcapao.position) > 16.0
-	_alcapao.body_exited.connect(func(corpo: Node) -> void:
+	_chave.add_child(c)
+	_chave.body_entered.connect(func(corpo: Node) -> void:
+		if corpo is Jogador and chave_no_chao():
+			_chave.queue_free()
+			Efeitos.faisca(self, _chave.position, Color(1, 0.9, 0.4))
+			chave_pega.emit())
+	add_child.call_deferred(_chave)
+	var tw := _chave.create_tween().set_loops()
+	tw.tween_property(s, "position:y", -3.0, 0.5)
+	tw.tween_property(s, "position:y", 0.0, 0.5)
+
+
+## porta para `d` está fechada? (inimigos vivos, ou é a porta do chefe sem a chave)
+func porta_trancada(d: Vector2i) -> bool:
+	return _trancada or (_tipo_porta.get(d, -1) == GeradorAndar.CHEFE and _chefe_trancado and not partida.tem_chave)
+
+
+func destrancar_chefe() -> void:
+	_chefe_trancado = false
+	_atualizar_portas()
+
+
+func tem_escada() -> bool:
+	return _escada != null and is_instance_valid(_escada)
+
+
+func mostrar_escada() -> void:
+	if tem_escada():
+		return
+	_escada = Area2D.new()
+	_escada.position = Vector2(160, 88)
+	_escada.collision_layer = 0
+	_escada.collision_mask = Camadas.JOGADOR
+	var s := Sprite2D.new()
+	s.texture = load("res://arte/escada.png")
+	s.z_index = -5
+	_escada.add_child(s)
+	var c := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(12, 12)
+	c.shape = r
+	_escada.add_child(c)
+	_escada_armado = jogador == null or jogador.position.distance_to(_escada.position) > 16.0
+	_escada.body_exited.connect(func(corpo: Node) -> void:
 		if corpo is Jogador:
-			_alcapao_armado = true)
-	_alcapao.body_entered.connect(func(corpo: Node) -> void:
-		if corpo is Jogador and not partida.morto() and _alcapao_armado:
-			alcapao_pisado.emit())
-	add_child.call_deferred(_alcapao)
+			_escada_armado = true)
+	_escada.body_entered.connect(func(corpo: Node) -> void:
+		if corpo is Jogador and not partida.morto() and _escada_armado:
+			escada_pisada.emit())
+	add_child.call_deferred(_escada)
 
 
 func coracao_no_chao() -> bool:
@@ -467,6 +523,7 @@ func _solido(t: Vector2i, camada: int, pai: Node = null) -> StaticBody2D:
 
 
 func _criar_porta(d: Vector2i, tipo_vizinho: int) -> void:
+	_tipo_porta[d] = tipo_vizinho
 	var no := Node2D.new()
 	add_child(no)
 	var sprites: Array[Sprite2D] = []
@@ -498,7 +555,7 @@ func _criar_porta(d: Vector2i, tipo_vizinho: int) -> void:
 	c.shape = r
 	gatilho.add_child(c)
 	gatilho.body_entered.connect(func(corpo: Node) -> void:
-		if corpo is Jogador and not _trancada and not partida.morto():
+		if corpo is Jogador and not porta_trancada(d) and not partida.morto():
 			saiu.emit(d))
 	no.add_child(gatilho)
 	_portas[d] = {"grade": grade, "sprites": sprites}
@@ -508,7 +565,8 @@ func _atualizar_portas() -> void:
 	var fechada: Texture2D = load("res://arte/porta_fechada.png")
 	var aberta_: Texture2D = load("res://arte/porta_aberta.png")
 	for d: Vector2i in _portas:
+		var fechar := porta_trancada(d)
 		for s: Sprite2D in _portas[d]["sprites"]:
-			s.texture = fechada if _trancada else aberta_
+			s.texture = fechada if fechar else aberta_
 		for b: Node in (_portas[d]["grade"] as Node2D).get_children():
-			(b as StaticBody2D).collision_layer = Camadas.PAREDE if _trancada else 0
+			(b as StaticBody2D).collision_layer = Camadas.PAREDE if fechar else 0

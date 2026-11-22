@@ -7,7 +7,7 @@ const SPRITES := {"heroi": 8, "morcego": 2, "slime": 2, "slime_pequeno": 2, "esq
 	"icone_tesouro": 1, "icone_fonte": 1, "icone_chefe": 1, "chao": 1, "chao2": 1, "parede": 1, "pilar": 1,
 	"porta_fechada": 1, "porta_aberta": 1, "digitos": 10, "chao3": 1, "aranha": 2, "fantasma": 2, "olho": 2,
 	"mago": 2, "tocha": 2, "sombra": 1, "coracao_chao": 1, "item_ricochete": 1, "item_perfurante": 1,
-	"item_teleguiado": 1, "item_explosivo": 1, "item_gelo": 1, "item_retaguarda": 1, "alcapao": 1,
+	"item_teleguiado": 1, "item_explosivo": 1, "item_gelo": 1, "item_retaguarda": 1, "escada": 1,
 	"slime_mae": 2, "aranha_rainha": 2, "colosso": 2, "olho_abismo": 2, "lich": 2, "poca_teia": 1, "espadachim": 8,
 	"chao_cripta": 1, "chao2_cripta": 1, "chao3_cripta": 1, "parede_cripta": 1, "pilar_cripta": 1,
 	"chao_catacumbas": 1, "chao2_catacumbas": 1, "chao3_catacumbas": 1, "parede_catacumbas": 1, "pilar_catacumbas": 1,

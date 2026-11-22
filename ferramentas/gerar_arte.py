@@ -240,22 +240,32 @@ def vinheta(w=320, h=176):
     return im
 
 
-def alcapao():
-    """Buraco escuro com moldura de madeira e degraus sumindo para baixo."""
-    madeira, madeira_c, cont = rgba("#6a4a30"), rgba("#8a6440"), rgba("#140f19")
+def escada():
+    """Escada de pedra subindo (degraus claros em cima, sombra embaixo) com moldura."""
+    cont, degrau, borda, somb = rgba("#140f19"), rgba("#9a8cb0"), rgba("#c8bcd8"), rgba("#4a3f5a")
     im = Image.new("RGBA", (16, 16), TRANSP)
     for y in range(16):
         for x in range(16):
             if x in (0, 15) or y in (0, 15):
                 cor = cont
-            elif x in (1, 14) or y in (1, 14):
-                cor = madeira_c if y == 1 or x == 1 else madeira
+            elif (y - 1) % 3 == 0:
+                cor = borda
+            elif (y - 1) % 3 == 1:
+                cor = degrau
             else:
-                prof = (y - 2) / 11
-                v = int(40 - 34 * prof)
-                cor = (v, max(0, v - 6), v + 8, 255) if (y - 2) % 3 else (v + 18, v + 12, v + 24, 255)
+                cor = somb
+            if 1 <= y <= 14 and x in (1, 14):
+                cor = cont
             im.putpixel((x, y), cor)
     return im
+
+
+CHAVE = [
+    "................", "................", "....kkkk........", "...kwwwwk.......",
+    "..kwk..kwk......", "..kwk..kwk......", "...kwwwwkkkkkkk.", "....kkkkwwwwwwwk",
+    "........kkkkgkgk", "...........k.k.k", "................", "................",
+    "................", "................", "................", "................",
+]
 
 
 def porta(fechada):
@@ -343,7 +353,8 @@ def main():
     salvar(pintar([h.HEROI_BAIXO, h.HEROI_BAIXO_2, h.HEROI_DIR, h.HEROI_DIR_2, h.HEROI_CIMA, h.HEROI_CIMA_2,
                    h.espelhar(h.HEROI_DIR), h.espelhar(h.HEROI_DIR_2)], ("#ffd8c8", "#c0392b")), "espadachim")
     salvar(sombra(), "sombra")
-    salvar(alcapao(), "alcapao")
+    salvar(escada(), "escada")
+    salvar(pintar([CHAVE], ("#fff0a0", "#c89a30")), "chave")
     salvar(brilho_tocha(), "brilho")
     salvar(vinheta(), "vinheta")
     salvar(porta(True), "porta_fechada")

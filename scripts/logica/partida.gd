@@ -33,6 +33,7 @@ var itens_pegos: Array[String] = []
 var salas_limpas: Dictionary = {}
 var andar_atual := 1
 var andares_concluidos := 0
+var tem_chave := false     # chave do chefe do andar atual (cai do subchefe)
 var salas_total := 0       # salas limpas dos andares já deixados para trás
 var semente := 0
 var personagem := "atirador"
@@ -63,6 +64,7 @@ func comecar(nova_semente: int, quem := "atirador") -> void:
 	andar_atual = 1
 	andares_concluidos = 0
 	salas_total = 0
+	tem_chave = false
 	venceu = false
 	carregar_recorde()
 
@@ -124,12 +126,13 @@ func limpar_sala(p: Vector2i) -> void:
 	salas_limpas[p] = true
 
 
-## pisou no alçapão: andar seguinte, +2 de vida, itens mantidos, salas do andar zeradas
-func descer() -> void:
+## pisou no escada: andar seguinte, +2 de vida, itens mantidos, salas do andar zeradas
+func subir() -> void:
 	andares_concluidos += 1
 	andar_atual += 1
 	salas_total += salas_limpas.size()
 	salas_limpas.clear()
+	tem_chave = false
 	curar(2)
 
 

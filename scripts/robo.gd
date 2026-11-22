@@ -17,7 +17,7 @@ var _acabou := false
 var _hp_alvo := -1
 var _sem_progresso := 0.0
 var _reposicionar := Vector2.ZERO
-var _no_alcapao := 0.0
+var _no_escada := 0.0
 
 
 func _init(m: Node) -> void:
@@ -86,7 +86,7 @@ func _jogar(delta: float) -> void:
 		main.partida.vida = main.partida.vida_max
 	if is_equal_approx(_t_sala, delta) or (_t_sala > 0.5 and _t_sala - delta <= 0.5):
 		if _t_sala > 0.5:
-			_foto(["inicio", "combate", "tesouro", "fonte", "chefe"][sala.tipo])
+			_foto(["inicio", "combate", "tesouro", "fonte", "chefe", "subchefe"][sala.tipo])
 	_soltar()
 	var j := sala.jogador
 	var alvo := sala.inimigo_mais_perto()
@@ -120,12 +120,14 @@ func _jogar(delta: float) -> void:
 			destino = j.position - d
 		elif dist > 90.0:
 			destino = alvo.position
-	elif sala.tem_alcapao():
-		# o alçapão só desce se o jogador pisar nele vindo de fora: parado em cima, sai e volta
-		_no_alcapao = _no_alcapao + delta if j.position.distance_to(Vector2(160, 88)) < 10.0 else 0.0
-		destino = Vector2(160, 130) if _no_alcapao > 0.4 else Vector2(160, 88)
-		if _no_alcapao > 1.6:
-			_no_alcapao = 0.0
+	elif sala.chave_no_chao():
+		destino = Vector2(160, 88)
+	elif sala.tem_escada():
+		# a escada só sobe se o jogador pisar nela vindo de fora: parado em cima, sai e volta
+		_no_escada = _no_escada + delta if j.position.distance_to(Vector2(160, 88)) < 10.0 else 0.0
+		destino = Vector2(160, 130) if _no_escada > 0.4 else Vector2(160, 88)
+		if _no_escada > 1.6:
+			_no_escada = 0.0
 	elif not sala.objeto_usado() and sala.tipo in [GeradorAndar.TESOURO, GeradorAndar.FONTE] \
 			and (sala.tipo == GeradorAndar.TESOURO or main.partida.vida < main.partida.vida_max):
 		destino = Vector2(160, 92)
@@ -164,6 +166,9 @@ func _eixo(d: Vector2, prefixo: String) -> String:
 func _proxima_porta(andar: Andar) -> Vector2i:
 	var salas: Dictionary = andar.mapa["salas"]
 	var objetivo: Vector2i = andar.mapa["chefe"]
+	for p: Vector2i in salas:
+		if salas[p] == GeradorAndar.SUBCHEFE and not main.partida.tem_chave:
+			objetivo = p
 	for p: Vector2i in salas:
 		if salas[p] == GeradorAndar.TESOURO and not main.partida.salas_limpas.has(p):
 			objetivo = p

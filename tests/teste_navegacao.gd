@@ -16,8 +16,9 @@ func _rodar() -> void:
 			"teste_minimapa_revela",
 			"teste_chefe_longe_da_entrada", "teste_minimapa_dentro_do_canto", "teste_dois_tesouros_diferentes",
 			"teste_coracao_persiste", "teste_coracao_sorteado", "teste_hud_itens",
-			"teste_chefe_vira_alcapao", "teste_descer_zera_mapa", "teste_inimigos_do_andar",
-			"teste_alcapao_nao_engole_parado"]:
+			"teste_chefe_vira_escada", "teste_subir_zera_mapa", "teste_inimigos_do_andar",
+			"teste_escada_nao_engole_parado", "teste_porta_chefe_trancada_sem_chave", "teste_chave_destranca",
+			"teste_minimapa_esconde_tipo"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -280,24 +281,24 @@ func teste_hud_itens() -> void:
 	await fim(a)
 
 
-func teste_chefe_vira_alcapao() -> void:
+func teste_chefe_vira_escada() -> void:
 	var a := novo_andar()
-	var sinais := {"vitoria": false, "desceu": false}
+	var sinais := {"vitoria": false, "subiu": false}
 	a.vitoria.connect(func() -> void: sinais["vitoria"] = true)
-	a.desceu.connect(func() -> void: sinais["desceu"] = true)
+	a.subiu.connect(func() -> void: sinais["subiu"] = true)
 	a.entrar(a.mapa["chefe"], Vector2i.DOWN)
 	await frames(3)
-	checa(not a.sala.tem_alcapao(), "sem alçapão com o chefe vivo")
+	checa(not a.sala.tem_escada(), "sem escada com o chefe vivo")
 	a.sala.inimigo_mais_perto().levar_tiro(999)
 	await frames(5)
-	checa(not sinais["vitoria"] and a.sala.tem_alcapao(), "andar 1: chefe morto abre alçapão, não vence")
+	checa(not sinais["vitoria"] and a.sala.tem_escada(), "andar 1: chefe morto abre escada, não vence")
 	a.sala.jogador.position = Vector2(160, 88)
 	await frames(5)
-	checa(sinais["desceu"] and a.partida.andar_atual == 2, "pisar no alçapão desce ao andar 2")
+	checa(sinais["subiu"] and a.partida.andar_atual == 2, "pisar na escada sobe ao andar 2")
 	await fim(a)
 
 
-func teste_descer_zera_mapa() -> void:
+func teste_subir_zera_mapa() -> void:
 	var a := novo_andar()
 	a.entrar(a.mapa["chefe"], Vector2i.DOWN)
 	await frames(3)
@@ -330,17 +331,79 @@ func teste_inimigos_do_andar() -> void:
 	await fim(a)
 
 
-func teste_alcapao_nao_engole_parado() -> void:
+func teste_escada_nao_engole_parado() -> void:
 	var a := novo_andar()
 	a.entrar(a.mapa["chefe"], Vector2i.DOWN)
 	await frames(3)
 	a.sala.jogador.position = Vector2(160, 90)   # matou o chefe no meio da sala
 	a.sala.inimigo_mais_perto().levar_tiro(999)
 	await frames(10)
-	checa(a.partida.andar_atual == 1 and a.sala.tem_alcapao(), "alçapão que aparece embaixo do jogador não desce sozinho")
+	checa(a.partida.andar_atual == 1 and a.sala.tem_escada(), "escada que aparece embaixo do jogador não sobe sozinha")
 	a.sala.jogador.position = Vector2(160, 140)
 	await frames(4)
 	a.sala.jogador.position = Vector2(160, 88)
 	await frames(5)
-	checa(a.partida.andar_atual == 2, "sair e pisar de novo desce")
+	checa(a.partida.andar_atual == 2, "sair e pisar de novo sobe")
+	await fim(a)
+
+
+func vizinho_do_chefe(a: Andar) -> Vector2i:
+	return GeradorAndar.vizinhos(a.mapa["salas"], a.mapa["chefe"])[0]
+
+
+func teste_porta_chefe_trancada_sem_chave() -> void:
+	var a := novo_andar()
+	var v := vizinho_do_chefe(a)
+	a.partida.limpar_sala(v)
+	a.entrar(v, Vector2i.ZERO)
+	await frames(3)
+	var d: Vector2i = a.mapa["chefe"] - v
+	checa(a.sala.aberta() and a.sala.porta_trancada(d), "sala limpa, mas a porta do chefe segue trancada sem chave")
+	await andar_ate_porta(a, d)
+	checa(a.posicao == v, "não entra no chefe sem chave")
+	await fim(a)
+
+
+func teste_chave_destranca() -> void:
+	var a := novo_andar()
+	var sub := sala_do_tipo(a, GeradorAndar.SUBCHEFE)
+	a.entrar(sub, Vector2i.DOWN)
+	await frames(3)
+	var c := a.sala.chefe()
+	checa(c != null and c.fases == 2, "sala do subchefe tem o subchefe (2 fases)")
+	c.levar_tiro(999)
+	await frames(5)
+	checa(a.sala.chave_no_chao() and not a.partida.tem_chave, "subchefe morto: chave no chão")
+	a.entrar(a.mapa["inicio"], Vector2i.DOWN)   # sai sem pegar
+	await frames(2)
+	a.entrar(sub, Vector2i.DOWN)
+	await frames(3)
+	checa(a.sala.chave_no_chao(), "a chave espera no chão se sair sem pegar")
+	a.sala.jogador.position = Vector2(160, 88)
+	await frames(4)
+	checa(a.partida.tem_chave and not a.sala.chave_no_chao(), "pegou a chave")
+	a.entrar(a.mapa["inicio"], Vector2i.DOWN)
+	await frames(2)
+	a.entrar(sub, Vector2i.DOWN)
+	await frames(3)
+	checa(not a.sala.chave_no_chao(), "chave não reaparece")
+	var v := vizinho_do_chefe(a)
+	a.partida.limpar_sala(v)
+	a.entrar(v, Vector2i.ZERO)
+	await frames(3)
+	checa(not a.sala.porta_trancada(a.mapa["chefe"] - v), "com a chave a porta do chefe abre")
+	await fim(a)
+
+
+func teste_minimapa_esconde_tipo() -> void:
+	var a := novo_andar()
+	var ok := true
+	for p: Vector2i in a.salas_conhecidas():
+		if not a.visitadas.has(p):
+			ok = ok and a.hud.cor_sala(p) == Hud.COR_DESCONHECIDA
+	checa(ok, "vizinhas não visitadas aparecem cinza, sem revelar o tipo")
+	var t := sala_do_tipo(a, GeradorAndar.TESOURO)
+	a.entrar(t, Vector2i.DOWN)
+	await frames(2)
+	checa(a.hud.cor_sala(t) == Hud.CORES_MAPA[GeradorAndar.TESOURO], "visitada mostra o tipo")
 	await fim(a)

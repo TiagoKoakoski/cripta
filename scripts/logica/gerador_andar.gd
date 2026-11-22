@@ -8,6 +8,7 @@ const COMBATE := 1
 const TESOURO := 2
 const FONTE := 3
 const CHEFE := 4
+const SUBCHEFE := 5
 
 const DIRECOES: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 const LIMITE := 4  # o grid vai de -4 a 4 em cada eixo
@@ -54,7 +55,7 @@ static func _tentar(rng: RandomNumberGenerator, faixa: Vector2i) -> Dictionary:
 	for p: Vector2i in ordem:
 		if p != Vector2i.ZERO and vizinhos(salas, p).size() == 1:
 			becos.append(p)
-	if becos.size() < 4:
+	if becos.size() < 5:
 		return {}
 	var dist := _distancias(salas, Vector2i.ZERO)
 	var chefe: Vector2i = becos[0]
@@ -66,6 +67,14 @@ static func _tentar(rng: RandomNumberGenerator, faixa: Vector2i) -> Dictionary:
 		if dist[p] > dist[chefe]:
 			return {}
 	becos.erase(chefe)
+	var longe_do_inicio: Array[Vector2i] = []
+	for b: Vector2i in becos:
+		if dist[b] >= 2:
+			longe_do_inicio.append(b)
+	if longe_do_inicio.is_empty():
+		return {}
+	var subchefe: Vector2i = longe_do_inicio[rng.randi_range(0, longe_do_inicio.size() - 1)]
+	becos.erase(subchefe)
 	var i_tesouro := rng.randi_range(0, becos.size() - 1)
 	var tesouro: Vector2i = becos[i_tesouro]
 	becos.remove_at(i_tesouro)
@@ -77,6 +86,7 @@ static func _tentar(rng: RandomNumberGenerator, faixa: Vector2i) -> Dictionary:
 	salas[chefe] = CHEFE
 	salas[tesouro] = TESOURO
 	salas[tesouro2] = TESOURO
+	salas[subchefe] = SUBCHEFE
 	salas[fonte] = FONTE
 	return {"salas": salas, "inicio": Vector2i.ZERO, "chefe": chefe}
 

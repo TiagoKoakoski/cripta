@@ -6,15 +6,28 @@ extends Inimigo
 
 signal fase_mudou(n: int)
 
-const VIDA_CHEFE := {"rei": 45, "slime_mae": 40, "aranha_rainha": 55, "colosso": 60, "olho_abismo": 65, "lich": 70}
+const VIDA_CHEFE := {"rei": 45, "slime_mae": 40, "aranha_rainha": 55, "colosso": 60, "olho_abismo": 65, "lich": 70,
+	"cavaleiro": 45, "verme": 55, "sombra_gemea": 65,
+	"morcego_vampiro": 18, "esqueleto_capitao": 20, "aranha_tecela": 26, "slime_rei": 28, "mago_sombrio": 32,
+	"fantasma_antigo": 30}
+const SUBCHEFES := ["morcego_vampiro", "esqueleto_capitao", "aranha_tecela", "slime_rei", "mago_sombrio", "fantasma_antigo"]
 const NOMES := {"rei": "REI ESQUELETO", "slime_mae": "SLIME MÃE", "aranha_rainha": "ARANHA RAINHA",
-	"colosso": "COLOSSO DE OSSOS", "olho_abismo": "OLHO DO ABISMO", "lich": "LICH"}
+	"colosso": "COLOSSO DE OSSOS", "olho_abismo": "OLHO DO ABISMO", "lich": "VESPER, O LICH",
+	"cavaleiro": "CAVALEIRO SEM CABEÇA", "verme": "VERME DE OSSOS", "sombra_gemea": "SOMBRA GÊMEA",
+	"morcego_vampiro": "MORCEGO VAMPIRO", "esqueleto_capitao": "ESQUELETO CAPITÃO", "aranha_tecela": "ARANHA TECELÃ",
+	"slime_rei": "SLIME REI", "mago_sombrio": "MAGO SOMBRIO", "fantasma_antigo": "FANTASMA ANTIGO"}
 const SCRIPTS := {"rei": "res://scripts/chefes/rei.gd", "slime_mae": "res://scripts/chefes/slime_mae.gd",
 	"aranha_rainha": "res://scripts/chefes/aranha_rainha.gd", "colosso": "res://scripts/chefes/colosso.gd",
-	"olho_abismo": "res://scripts/chefes/olho_abismo.gd", "lich": "res://scripts/chefes/lich.gd"}
+	"olho_abismo": "res://scripts/chefes/olho_abismo.gd", "lich": "res://scripts/chefes/lich.gd",
+	"cavaleiro": "res://scripts/chefes/cavaleiro.gd", "verme": "res://scripts/chefes/verme.gd",
+	"sombra_gemea": "res://scripts/chefes/sombra_gemea.gd",
+	"morcego_vampiro": "res://scripts/chefes/sub_morcego_vampiro.gd", "esqueleto_capitao": "res://scripts/chefes/sub_esqueleto_capitao.gd",
+	"aranha_tecela": "res://scripts/chefes/sub_aranha_tecela.gd", "slime_rei": "res://scripts/chefes/sub_slime_rei.gd",
+	"mago_sombrio": "res://scripts/chefes/sub_mago_sombrio.gd", "fantasma_antigo": "res://scripts/chefes/sub_fantasma_antigo.gd"}
 const ESPERA := 1.0
 
 var nome_exibido := ""
+var fases := 3               # subchefes têm 2 (fase 2 na metade da vida)
 var ultima_rajada := 0      # quantos tiros saíram na última rajada (testes e robô)
 var _fase := 1
 var _espera := ESPERA
@@ -25,12 +38,17 @@ static func criar_chefe(nome: String, pos: Vector2, jogador_: Node2D, sala_: Nod
 	var caminho: String = SCRIPTS.get(nome, SCRIPTS["rei"])
 	if not ResourceLoader.exists(caminho):
 		caminho = SCRIPTS["rei"]
-	var c: Chefe = load(caminho).new()
+	var script: Variant = load(caminho)
+	var c: Chefe = script.new() if script else null
+	if c == null:   # script com erro: não derruba o jogo
+		c = load(SCRIPTS["rei"]).new()
 	c._montar(nome, pos, jogador_, sala_, semente)
 	c.hp = VIDA_CHEFE.get(nome, 45)
 	c.hp_max = c.hp
 	c.nome_exibido = NOMES.get(nome, nome.to_upper())
 	c.add_to_group("chefe")
+	if nome in SUBCHEFES:
+		c.fases = 2
 	c._ajustar_escala(c._escala)
 	c._preparar()
 	return c
@@ -60,7 +78,8 @@ func _ia(delta: float) -> void:
 		_espera -= delta
 		velocity = Vector2.ZERO
 		return
-	var f := 1 if hp > hp_max * 2 / 3 else (2 if hp > hp_max / 3 else 3)
+	var f := (1 if hp > hp_max * 2 / 3 else (2 if hp > hp_max / 3 else 3)) if fases == 3 \
+		else (1 if hp > hp_max / 2 else 2)
 	while _fase < f:   # dano grande de uma vez não pula fase (cada uma tem seu efeito)
 		_fase += 1
 		fase_mudou.emit(_fase)

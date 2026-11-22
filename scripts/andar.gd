@@ -6,7 +6,7 @@ signal vitoria
 signal derrota
 signal sala_mudou(posicao: Vector2i)
 signal chefe_vencido
-signal desceu
+signal subiu
 
 var partida: Partida
 var mapa: Dictionary
@@ -15,7 +15,8 @@ var sala: Sala
 var hud: Hud
 var visitadas := {}
 var _cfg := {}   # Vector2i -> dicionário de configuração da sala (fixo para o andar)
-var chefe_forcado := ""   # --chefe=<nome> e testes; vazio = sorteado da tabela do andar
+var chefe_forcado := ""
+var subchefe_forcado := ""   # --chefe=<nome> e testes; vazio = sorteado da tabela do andar
 var _semente := 0
 
 
@@ -40,6 +41,8 @@ func _montar_andar() -> void:
 	rng.seed = semente * 31 + 7
 	var chefes: Array = info["chefes"]
 	var chefe: String = chefe_forcado if chefe_forcado != "" else chefes[rng.randi_range(0, chefes.size() - 1)]
+	var subs: Array = info["subchefes"]
+	var subchefe: String = subchefe_forcado if subchefe_forcado != "" else subs[rng.randi_range(0, subs.size() - 1)]
 	var dist := GeradorAndar._distancias(mapa["salas"], mapa["inicio"])
 	var sorteados := []
 	for pos: Vector2i in mapa["salas"]:
@@ -49,7 +52,7 @@ func _montar_andar() -> void:
 			portas[v - pos] = mapa["salas"][v]
 		var cfg := {"tipo": tipo, "portas": portas, "layout": rng.randi_range(0, 3), "semente": rng.randi(),
 			"inimigos": Andar.sortear_inimigos(rng, dist[pos], n) if tipo == GeradorAndar.COMBATE else [],
-			"tema": info["tema"], "mult_vida": info["mult_vida"], "chefe": chefe,
+			"tema": info["tema"], "mult_vida": info["mult_vida"], "chefe": chefe, "subchefe": subchefe,
 			"coracao": tipo == GeradorAndar.COMBATE and rng.randf() < 0.3}
 		if tipo == GeradorAndar.TESOURO:
 			cfg["item"] = partida.sortear_item(sorteados)
@@ -83,7 +86,8 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 	var cfg: Dictionary = _cfg[pos].duplicate()
 	cfg["limpa"] = partida.salas_limpas.has(pos) or cfg["tipo"] == GeradorAndar.INICIO
 	cfg["entrada"] = entrada
-	cfg["alcapao"] = cfg["limpa"] and cfg["tipo"] == GeradorAndar.CHEFE and partida.andar_atual < Andares.TOTAL
+	cfg["chefe_trancado"] = not partida.tem_chave
+	cfg["escada"] = cfg["limpa"] and cfg["tipo"] == GeradorAndar.CHEFE and partida.andar_atual < Andares.TOTAL
 	sala = Sala.new()
 	sala.configurar(cfg, partida)
 	sala.saiu.connect(func(d: Vector2i) -> void: _mudar.call_deferred(pos + d, -d))
@@ -91,6 +95,12 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 	sala.item_pego.connect(func(i: String) -> void:
 		partida.limpar_sala(pos)
 		hud.anunciar(i))
+	sala.chave_caiu.connect(func() -> void: _cfg[pos]["chave"] = true)
+	sala.chave_pega.connect(func() -> void:
+		_cfg[pos]["chave"] = false
+		partida.tem_chave = true
+		Sons.tocar("item")
+		hud.anunciar_texto("CHAVE DA TORRE", "a porta do chefe se abre"))
 	sala.coracao_pego.connect(func() -> void: _cfg[pos]["coracao"] = false)
 	sala.jogador_morreu.connect(func() -> void: derrota.emit())
 	sala.chefe_morto.connect(func() -> void:
@@ -98,21 +108,21 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 		if partida.andar_atual >= Andares.TOTAL:
 			vitoria.emit()
 		else:
-			sala.mostrar_alcapao()
+			sala.mostrar_escada()
 			chefe_vencido.emit())
-	sala.alcapao_pisado.connect(_descer, CONNECT_DEFERRED)
+	sala.escada_pisada.connect(_subir, CONNECT_DEFERRED)
 	add_child(sala)
 	sala_mudou.emit(pos)
 
 
-func _descer() -> void:
+func _subir() -> void:
 	if partida.morto():
 		return
-	partida.descer()
+	partida.subir()
 	_montar_andar()
 	entrar(mapa["inicio"], Vector2i.ZERO)
 	Sons.tocar("porta")
-	desceu.emit()
+	subiu.emit()
 
 
 func _mudar(pos: Vector2i, entrada: Vector2i) -> void:
