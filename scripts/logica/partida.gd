@@ -2,7 +2,9 @@
 class_name Partida
 extends RefCounted
 
-const ITENS: Array[String] = ["espada", "raio", "coracao_extra", "botas", "tiro_triplo", "alcance"]
+const ITENS: Array[String] = ["espada", "raio", "coracao_extra", "botas", "tiro_triplo", "alcance",
+	"ricochete", "perfurante", "teleguiado", "explosivo", "gelo", "retaguarda"]
+const ITENS_DE_TIRO: Array[String] = ["ricochete", "perfurante", "teleguiado", "explosivo", "gelo", "retaguarda"]
 const VIDA_INICIAL := 3
 const VIDA_MAXIMA := 8
 const INVENCIBILIDADE := 1.0
@@ -15,6 +17,12 @@ var cadencia := 0.4        # segundos entre tiros
 var velocidade := VELOCIDADE  # px/s
 var tiro_triplo := false
 var alcance := false
+var ricochete := false
+var perfurante := false
+var teleguiado := false
+var explosivo := false
+var gelo := false
+var retaguarda := false
 var invencivel := 0.0
 var itens_pegos: Array[String] = []
 var salas_limpas: Dictionary = {}
@@ -35,6 +43,8 @@ func comecar(nova_semente: int) -> void:
 	velocidade = VELOCIDADE
 	tiro_triplo = false
 	alcance = false
+	for it: String in ITENS_DE_TIRO:
+		set(it, false)
 	invencivel = 0.0
 	itens_pegos.clear()
 	salas_limpas.clear()
@@ -89,6 +99,9 @@ func pegar_item(item: String) -> void:
 			tiro_triplo = true
 		"alcance":
 			alcance = true
+		_:
+			if item in ITENS_DE_TIRO:
+				set(item, true)
 
 
 func limpar_sala(p: Vector2i) -> void:

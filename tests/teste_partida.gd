@@ -7,7 +7,7 @@ var falhou := 0
 
 func _initialize() -> void:
 	for t: String in ["teste_inicio", "teste_dano_e_invencibilidade", "teste_morte", "teste_cura_limite",
-			"teste_itens", "teste_itens_sem_repetir", "teste_recomeco_zera", "teste_recorde"]:
+			"teste_itens", "teste_itens_de_tiro", "teste_itens_sem_repetir", "teste_recomeco_zera", "teste_recorde"]:
 		if call(t) != true:
 			falhou += 1
 			push_error("FALHOU %s: não terminou" % t)
@@ -89,14 +89,29 @@ func teste_itens() -> bool:
 	return true
 
 
+func teste_itens_de_tiro() -> bool:
+	var p := nova()
+	igual([p.ricochete, p.perfurante, p.teleguiado, p.explosivo, p.gelo, p.retaguarda],
+		[false, false, false, false, false, false], "tiro começa simples")
+	for it: String in ["ricochete", "perfurante", "teleguiado", "explosivo", "gelo", "retaguarda"]:
+		igual(it in Partida.ITENS, true, "%s está no sorteio" % it)
+		p.pegar_item(it)
+	igual([p.ricochete, p.perfurante, p.teleguiado, p.explosivo, p.gelo, p.retaguarda],
+		[true, true, true, true, true, true], "cada item liga seu efeito")
+	p.comecar(3)
+	igual([p.ricochete, p.perfurante, p.teleguiado, p.explosivo, p.gelo, p.retaguarda],
+		[false, false, false, false, false, false], "recomeço desliga os efeitos de tiro")
+	return true
+
+
 func teste_itens_sem_repetir() -> bool:
 	var p := nova()
 	var vistos := {}
-	for i in 6:
+	for i in 12:
 		var it := p.sortear_item()
 		p.pegar_item(it)
 		vistos[it] = true
-	igual(vistos.size(), 6, "6 itens diferentes")
+	igual(vistos.size(), 12, "12 itens diferentes")
 	igual(p.sortear_item(), "coracao_extra", "acabaram: dá coração extra")
 	return true
 
