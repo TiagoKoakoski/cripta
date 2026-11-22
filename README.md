@@ -3,9 +3,17 @@
 Roguelike de masmorra em **Godot 4.7**. É a versão expandida da
 [Cripta de Bolso](https://github.com/TiagoKoakoski/gb-cripta) de Game Boy.
 
-Desça os **3 andares** (Cripta, Catacumbas e Abismo) e vença o chefe de cada um. Cada andar é gerado
-na hora, como no The Binding of Isaac, e a cada porta você escolhe o caminho, como no Slay the Spire.
-Morreu, volta ao título e recomeça do andar 1; o recorde fica salvo por personagem.
+## A Torre Morta
+
+Numa noite sem estrelas, uma torre negra brotou do cemitério de Vale-Cinza e rachou a velha cripta
+ao meio. No alto dela, o Lich Vesper rasgou o céu: o **Abismo** engole as estrelas, uma a uma, e
+quando a última apagar os mortos da cidade levantam. Quatro moradores entram pela cripta e **sobem**
+a torre para fechar a fenda.
+
+Suba os **3 andares** (Cripta, Catacumbas, Abismo). Em cada um, ache o **subchefe**, pegue a
+**chave** e enfrente o chefe. Os andares são gerados na hora, como no The Binding of Isaac. A cada
+porta você escolhe o caminho, como no Slay the Spire. Morreu, volta ao título e recomeça do andar 1.
+O recorde fica salvo por personagem.
 
 ## Como jogar
 
@@ -18,18 +26,20 @@ Morreu, volta ao título e recomeça do andar 1; o recorde fica salvo por person
 | Escolher personagem (título) | ← → ou A D | analógico / direcional |
 | Começar | Enter, espaço, ↑ ou ↓ | qualquer botão |
 
-- **Personagens** (escolhidos no título):
-  - **Atirador:** 3 corações, atira à distância.
-  - **Espadachim:** 4 corações, mais rápido, golpe em arco que também **destrói tiros inimigos**.
-    Os itens de tiro viram versões para a lâmina (ricochete devolve o tiro, explosivo explode quem
-    morre no golpe, teleguiado lança uma lâmina a cada 3 golpes...). O anúncio do item diz o efeito.
+- **Personagens** (escolhidos no título; os itens de tiro se adaptam a cada um, e o anúncio do item diz o efeito):
+  - **Iara, a Atiradora:** 3 corações, atira a luz do farol.
+  - **Bento, o Espadachim:** 4 corações, mais rápido, golpe em arco que também **destrói tiros inimigos**.
+  - **Lúcio, o Alquimista:** 3 corações, frascos em arco que explodem em área (dano 2, mais lento).
+  - **Cauã, o Caçador:** 3 corações, o mais rápido, bumerangue que acerta na ida e na volta.
 - **Vida:** até 8 corações. Levou dano, fica ~1 s piscando e invencível.
-- **Andares:** 1 Cripta (9–12 salas), 2 Catacumbas (10–13), 3 Abismo (11–14), cada um com seus
-  inimigos, 2 tesouros e 1 fonte. Os inimigos ficam mais numerosos e com mais vida a cada andar.
-  Depois do chefe aparece um **alçapão**: pise nele para descer (+2 de vida, itens mantidos).
-  - **Portas:** trancam enquanto houver inimigo. Cada porta mostra o que vem do outro lado:
-    **caveira** (combate), **baú** (tesouro), **coração** (fonte), **coroa** (chefe).
-  - **Minimapa:** no canto.
+- **Andares:** 1 Cripta (10–12 salas), 2 Catacumbas (13–15), 3 Abismo (16–19). Cada um tem seus
+  inimigos, 2 tesouros, 1 fonte, 1 subchefe e 1 chefe. Os inimigos ficam mais numerosos e com mais vida
+  a cada andar. Depois do chefe aparece uma **escada**: pise nela para subir (+2 de vida, itens mantidos),
+  com uma transição mostrando a torre.
+  - **Portas:** trancam enquanto houver inimigo. Cada tipo de sala tem a sua porta. Combate é de
+    madeira, tesouro é dourada, a fonte tem arco azul, o subchefe tem correntes vermelhas. O chefe
+    tem crânios e **cadeado** até você ter a chave.
+  - **Minimapa:** salas ainda não visitadas aparecem cinza.
   - **Salas limpas:** continuam limpas quando você volta.
 - **Inimigos:**
   - **Morcego:** mergulha e recua.
@@ -40,13 +50,23 @@ Morreu, volta ao título e recomeça do andar 1; o recorde fica salvo por person
   - **Olho:** parado; atira em cruz e depois em X.
   - **Mago:** some, reaparece longe de você e atira 3 tiros em leque.
   - Todo inimigo leva meio segundo para surgir (pisca e não fere). Quanto mais longe do início, mais e mais fortes.
-- **Chefes** (um sorteado entre 2 por andar; barra de vida no topo; 3 fases; todo ataque forte é avisado):
-  - **Cripta:** **Rei Esqueleto** (rajadas, depois espiral e esqueletos) ou **Slime Mãe** (salta, a
-    sombra mostra onde cai; solta slimes e fica menor).
-  - **Catacumbas:** **Aranha Rainha** (teias que viram poças que deixam você lento, aranhas,
-    investidas) ou **Colosso de Ossos** (mira e investe até a parede; tonto, leva dano em dobro).
-  - **Abismo:** **Olho do Abismo** (espirais; olhinhos que o protegem; feixe giratório) ou **Lich**
-    (teleporta, cópias falsas, chuva de tiros com uma brecha).
+- **Subchefes** (um sorteado entre 2 por andar; 2 fases; deixam a chave):
+  - **Cripta:** Morcego Vampiro (mergulhos, chama morcegos) ou Esqueleto Capitão (leques e investidas).
+  - **Catacumbas:** Aranha Tecelã (teias em cruz) ou Slime Rei (vira 2 slimes grandes ao morrer).
+  - **Abismo:** Mago Sombrio (2 teleportes e leque de 5) ou Fantasma Antigo (some e reaparece).
+- **Chefes** (um sorteado entre 3 por andar; barra de vida no topo; 3 fases; todo ataque forte é avisado):
+  - **Cripta:**
+    - **Rei Esqueleto:** rajadas, depois espiral e esqueletos.
+    - **Slime Mãe:** salta, a sombra mostra onde cai; solta slimes e fica menor.
+    - **Cavaleiro sem Cabeça:** investe, arremessa a cabeça que persegue; na fase 3 deixa fogo.
+  - **Catacumbas:**
+    - **Aranha Rainha:** teias que viram poças e deixam você lento, aranhas, investidas.
+    - **Colosso de Ossos:** mira e investe até a parede; fica tonto e leva dano em dobro.
+    - **Verme de Ossos:** cava, o chão treme onde ele vai sair, anel de tiros.
+  - **Abismo:**
+    - **Olho do Abismo:** espirais; olhinhos que o protegem; feixe giratório.
+    - **Vesper, o Lich:** teleporta, cópias falsas, chuva de tiros com uma brecha.
+    - **Sombra Gêmea:** a sua sombra, que espelha você e atira quando você atira.
 - **Itens** (um por tesouro, sem repetir; os de tiro combinam entre si):
   - Espada: dano +1.
   - Raio: atira mais rápido.
