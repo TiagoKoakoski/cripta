@@ -52,15 +52,22 @@ func _rodar() -> void:
 	checa(main.estado == "terminando", "tiro na pausa da morte não recomeça (estado %s)" % main.estado)
 	await frames(90)
 	checa(main.estado == "fim", "e a tela de fim aparece")
-	# vitória: matar o Rei leva à tela de vitória
+	# vitória: vencer os chefes dos 3 andares (descendo pelos alçapões) leva à tela de vitória
 	await apertar("confirmar")
 	checa(main.estado == "jogando", "nova partida")
-	main.andar.entrar(main.andar.mapa["chefe"], Vector2i.DOWN)
-	await frames(3)
-	main.andar.sala.inimigo_mais_perto().levar_tiro(99)
+	for n in 3:
+		main.andar.entrar(main.andar.mapa["chefe"], Vector2i.DOWN)
+		await frames(3)
+		main.andar.sala.inimigo_mais_perto().levar_tiro(999)
+		await frames(5)
+		if n < 2:
+			checa(main.estado == "jogando" and main.andar.sala.tem_alcapao(), "andar %d: alçapão" % (n + 1))
+			main.andar.sala.jogador.position = Vector2(160, 88)
+			await frames(5)
+			checa(main.partida.andar_atual == n + 2, "desceu ao andar %d" % (n + 2))
 	await frames(90)
-	checa(main.estado == "vitoria", "matar o Rei mostra a vitória (estado %s)" % main.estado)
-	checa(main.partida.recorde >= 100, "vitória vale +100 no recorde")
+	checa(main.estado == "vitoria", "chefe do andar 3 mostra a vitória (estado %s)" % main.estado)
+	checa(main.partida.recorde >= 300, "vitória vale 300+ no recorde")
 	checa(main.arquivo_para(["--autoplay"]) != main.arquivo_para([]), "robô grava recorde em arquivo próprio")
 	main.partida.apagar_recorde()
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])

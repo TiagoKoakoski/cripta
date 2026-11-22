@@ -9,6 +9,7 @@ signal item_pego(item: String)
 signal jogador_morreu
 signal chefe_morto
 signal coracao_pego
+signal alcapao_pisado
 
 const T := 16
 const COLS := 20
@@ -40,6 +41,8 @@ var _rng := RandomNumberGenerator.new()
 var _layout := -1
 var _tem_coracao := false   # esta sala solta (ou guarda) um coração quando limpa
 var _coracao: Area2D
+var _alcapao: Area2D
+var _mult_vida := 1.0
 var _inimigos: Array = []  # registrados na criação (podem entrar na árvore um quadro depois)
 
 
@@ -90,6 +93,7 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 	var layout: int = cfg.get("layout", 0) if tipo == GeradorAndar.COMBATE else -1
 	var entrada: Vector2i = cfg.get("entrada", Vector2i.ZERO)
 	_layout = layout
+	_mult_vida = cfg.get("mult_vida", 1.0)
 	_montar_chao_e_paredes(cfg.get("portas", {}), layout)
 	jogador = Jogador.criar(partida, self, ponto_de_entrada(entrada))
 	jogador.morreu.connect(func() -> void: jogador_morreu.emit())
@@ -103,9 +107,11 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 		_fonte_usada = limpa_antes
 		_criar_objeto("fonte", "")
 	elif tipo == GeradorAndar.CHEFE and not limpa_antes:
-		# o Rei nasce do lado oposto à porta de entrada (nunca colado no jogador)
+		# o chefe nasce do lado oposto à porta de entrada (nunca colado no jogador)
 		var lado := -entrada if entrada != Vector2i.ZERO else Vector2i.UP
-		_criar_inimigo("rei", ponto_de_entrada(lado))
+		_criar_chefe(cfg.get("chefe", "rei"), ponto_de_entrada(lado))
+	elif tipo == GeradorAndar.CHEFE and cfg.get("alcapao", false):
+		mostrar_alcapao()
 	if not limpa_antes and tipo == GeradorAndar.COMBATE:
 		var livres := posicoes_inimigos(maxi(layout, 0), entrada)
 		var i := 0
@@ -159,8 +165,16 @@ func inimigo_mais_perto() -> Inimigo:
 	return melhor
 
 
+## por ora todo chefe é o Rei (os outros chegam com os scripts de chefe)
+func _criar_chefe(_nome: String, pos: Vector2) -> void:
+	_criar_inimigo("rei", pos)
+
+
 func _criar_inimigo(t: String, pos: Vector2) -> void:
 	var e := Inimigo.criar(t, pos, jogador, self, _rng.randi())
+	if t != "rei" and _mult_vida != 1.0:
+		e.hp = ceili(e.hp * _mult_vida)
+		e.hp_max = e.hp
 	e.morreu.connect(_inimigo_morreu)
 	_inimigos.append(e)
 	# durante a física (morte por tiro) não dá pra adicionar corpos na hora
@@ -244,6 +258,32 @@ func tremer() -> void:
 	for i in 5:
 		_tremor.tween_property(self, "position", Vector2(_rng.randf_range(-3, 3), _rng.randf_range(-3, 3)), 0.035)
 	_tremor.tween_property(self, "position", Vector2.ZERO, 0.035)
+
+
+func tem_alcapao() -> bool:
+	return _alcapao != null and is_instance_valid(_alcapao)
+
+
+func mostrar_alcapao() -> void:
+	if tem_alcapao():
+		return
+	_alcapao = Area2D.new()
+	_alcapao.position = Vector2(160, 88)
+	_alcapao.collision_layer = 0
+	_alcapao.collision_mask = Camadas.JOGADOR
+	var s := Sprite2D.new()
+	s.texture = load("res://arte/alcapao.png")
+	s.z_index = -5
+	_alcapao.add_child(s)
+	var c := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(12, 12)
+	c.shape = r
+	_alcapao.add_child(c)
+	_alcapao.body_entered.connect(func(corpo: Node) -> void:
+		if corpo is Jogador and not partida.morto():
+			alcapao_pisado.emit())
+	add_child.call_deferred(_alcapao)
 
 
 func coracao_no_chao() -> bool:

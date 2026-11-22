@@ -6,7 +6,7 @@ var falhou := 0
 
 
 func _initialize() -> void:
-	for t: String in ["teste_quantidade", "teste_andar_conexo", "teste_especiais", "teste_determinismo",
+	for t: String in ["teste_quantidade", "teste_salas_por_andar", "teste_andar_conexo", "teste_especiais", "teste_determinismo",
 			"teste_vizinhos_simetricos", "teste_variedade"]:
 		if call(t) != true:
 			falhou += 1
@@ -100,4 +100,17 @@ func teste_variedade() -> bool:
 	for s in 50:
 		formas[str(GeradorAndar.gerar(s)["salas"].keys())] = true
 	checa(formas.size() >= 40, "andares variados (%d formas em 50)" % formas.size())
+	return true
+
+
+func teste_salas_por_andar() -> bool:
+	for n in [1, 2, 3]:
+		var faixa: Vector2i = Andares.info(n)["salas"]
+		for s in 200:
+			var q: int = GeradorAndar.gerar(s, n)["salas"].size()
+			if q < faixa.x or q > faixa.y:
+				checa(false, "andar %d semente %d: %d salas fora de %s" % [n, s, q, faixa])
+				return true
+	checa(Andares.info(2)["salas"] == Vector2i(10, 13) and Andares.info(3)["salas"] == Vector2i(11, 14), "faixas da tabela")
+	checa(true, "salas na faixa de cada andar")
 	return true

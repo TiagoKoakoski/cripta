@@ -15,7 +15,8 @@ func _rodar() -> void:
 			"teste_fonte_uma_vez", "teste_chefe_morto_vence", "teste_morte_derrota", "teste_hud",
 			"teste_minimapa_revela",
 			"teste_chefe_longe_da_entrada", "teste_minimapa_dentro_do_canto", "teste_dois_tesouros_diferentes",
-			"teste_coracao_persiste", "teste_coracao_sorteado", "teste_hud_itens"]:
+			"teste_coracao_persiste", "teste_coracao_sorteado", "teste_hud_itens",
+			"teste_chefe_vira_alcapao", "teste_descer_zera_mapa", "teste_inimigos_do_andar"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -29,10 +30,11 @@ func checa(cond: bool, rotulo: String) -> void:
 		push_error("FALHOU " + rotulo)
 
 
-func novo_andar(semente := 5) -> Andar:
+func novo_andar(semente := 5, andar := 1) -> Andar:
 	var p := Partida.new()
 	p.arquivo_recorde = "user://teste_recorde.cfg"
 	p.comecar(semente)
+	p.andar_atual = andar
 	var a := Andar.new()
 	root.add_child(a)
 	a.iniciar(p, semente)
@@ -149,7 +151,7 @@ func teste_fonte_uma_vez() -> void:
 
 
 func teste_chefe_morto_vence() -> void:
-	var a := novo_andar()
+	var a := novo_andar(5, 3)
 	var venceu := [false]
 	a.vitoria.connect(func() -> void: venceu[0] = true)
 	a.entrar(a.mapa["chefe"], Vector2i.DOWN)
@@ -274,4 +276,54 @@ func teste_hud_itens() -> void:
 	await frames(2)
 	checa(a.hud.icones_itens() == 1, "HUD mostra o ícone do item pego (%d)" % a.hud.icones_itens())
 	checa(a.hud.mensagem().begins_with(Hud.NOMES[item]), "HUD anuncia o item: '%s'" % a.hud.mensagem())
+	await fim(a)
+
+
+func teste_chefe_vira_alcapao() -> void:
+	var a := novo_andar()
+	var sinais := {"vitoria": false, "desceu": false}
+	a.vitoria.connect(func() -> void: sinais["vitoria"] = true)
+	a.desceu.connect(func() -> void: sinais["desceu"] = true)
+	a.entrar(a.mapa["chefe"], Vector2i.DOWN)
+	await frames(3)
+	checa(not a.sala.tem_alcapao(), "sem alçapão com o chefe vivo")
+	a.sala.inimigo_mais_perto().levar_tiro(999)
+	await frames(5)
+	checa(not sinais["vitoria"] and a.sala.tem_alcapao(), "andar 1: chefe morto abre alçapão, não vence")
+	a.sala.jogador.position = Vector2(160, 88)
+	await frames(5)
+	checa(sinais["desceu"] and a.partida.andar_atual == 2, "pisar no alçapão desce ao andar 2")
+	await fim(a)
+
+
+func teste_descer_zera_mapa() -> void:
+	var a := novo_andar()
+	a.entrar(a.mapa["chefe"], Vector2i.DOWN)
+	await frames(3)
+	a.sala.inimigo_mais_perto().levar_tiro(999)
+	await frames(5)
+	a.sala.jogador.position = Vector2(160, 88)
+	await frames(5)
+	checa(a.posicao == a.mapa["inicio"] and a.visitadas.size() == 1, "andar novo começa na sala de início, mapa zerado")
+	checa(a.partida.salas_limpas.is_empty() and a.sala.vivos() == 0, "salas limpas zeradas e sala inicial vazia")
+	var faixa: Vector2i = Andares.info(2)["salas"]
+	checa(a.mapa["salas"].size() >= faixa.x, "mapa do andar 2 tem o tamanho do andar 2")
+	await fim(a)
+
+
+func teste_inimigos_do_andar() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var ok := true
+	for i in 200:
+		ok = ok and Andar.sortear_inimigos(rng, 1, 1).all(func(t: String) -> bool: return t in ["morcego", "slime", "aranha"])
+	checa(ok, "andar 1 perto do início: morcego, slime, aranha")
+	var n3 := Andar.sortear_inimigos(rng, 5, 3).size()
+	checa(n3 == 6, "andar 3 longe: 6 inimigos (%d)" % n3)
+	var a := novo_andar(5, 2)
+	var c := sala_do_tipo(a, GeradorAndar.COMBATE)
+	a._cfg[c]["inimigos"] = ["esqueleto"]
+	a.entrar(c, Vector2i.DOWN)
+	await frames(2)
+	checa(a.sala.inimigo_mais_perto().hp == 4, "andar 2: esqueleto com 3 x 1,3 = 4 de vida")
 	await fim(a)

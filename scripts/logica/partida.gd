@@ -26,6 +26,9 @@ var retaguarda := false
 var invencivel := 0.0
 var itens_pegos: Array[String] = []
 var salas_limpas: Dictionary = {}
+var andar_atual := 1
+var andares_concluidos := 0
+var salas_total := 0       # salas limpas dos andares já deixados para trás
 var semente := 0
 var recorde := 0
 var venceu := false
@@ -48,6 +51,9 @@ func comecar(nova_semente: int) -> void:
 	invencivel = 0.0
 	itens_pegos.clear()
 	salas_limpas.clear()
+	andar_atual = 1
+	andares_concluidos = 0
+	salas_total = 0
 	venceu = false
 	carregar_recorde()
 
@@ -108,11 +114,26 @@ func limpar_sala(p: Vector2i) -> void:
 	salas_limpas[p] = true
 
 
+## pisou no alçapão: andar seguinte, +2 de vida, itens mantidos, salas do andar zeradas
+func descer() -> void:
+	andares_concluidos += 1
+	andar_atual += 1
+	salas_total += salas_limpas.size()
+	salas_limpas.clear()
+	curar(2)
+
+
+func pontos() -> int:
+	return 100 * andares_concluidos + salas_total + salas_limpas.size()
+
+
 func terminar(vitoria: bool) -> void:
 	venceu = vitoria
-	var pontos := salas_limpas.size() + (100 if vitoria else 0)
-	if pontos > recorde:
-		recorde = pontos
+	if vitoria:
+		andares_concluidos = Andares.TOTAL
+	var pontos_ := pontos()
+	if pontos_ > recorde:
+		recorde = pontos_
 		var cfg := ConfigFile.new()
 		cfg.set_value("cripta", "recorde", recorde)
 		cfg.save(arquivo_recorde)

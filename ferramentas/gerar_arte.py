@@ -222,6 +222,24 @@ def vinheta(w=320, h=176):
     return im
 
 
+def alcapao():
+    """Buraco escuro com moldura de madeira e degraus sumindo para baixo."""
+    madeira, madeira_c, cont = rgba("#6a4a30"), rgba("#8a6440"), rgba("#140f19")
+    im = Image.new("RGBA", (16, 16), TRANSP)
+    for y in range(16):
+        for x in range(16):
+            if x in (0, 15) or y in (0, 15):
+                cor = cont
+            elif x in (1, 14) or y in (1, 14):
+                cor = madeira_c if y == 1 or x == 1 else madeira
+            else:
+                prof = (y - 2) / 11
+                v = int(40 - 34 * prof)
+                cor = (v, max(0, v - 6), v + 8, 255) if (y - 2) % 3 else (v + 18, v + 12, v + 24, 255)
+            im.putpixel((x, y), cor)
+    return im
+
+
 def porta(fechada):
     linhas = []
     for y in range(16):
@@ -293,6 +311,7 @@ def main():
     salvar(parede(), "parede")
     salvar(pilar(), "pilar")
     salvar(sombra(), "sombra")
+    salvar(alcapao(), "alcapao")
     salvar(brilho_tocha(), "brilho")
     salvar(vinheta(), "vinheta")
     salvar(porta(True), "porta_fechada")

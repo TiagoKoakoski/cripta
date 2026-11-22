@@ -22,18 +22,19 @@ static func vizinhos(salas: Dictionary, p: Vector2i) -> Array[Vector2i]:
 
 
 ## Retorna {"salas": {Vector2i: tipo}, "inicio": Vector2i, "chefe": Vector2i}.
-static func gerar(semente: int) -> Dictionary:
+static func gerar(semente: int, andar := 1) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = semente
+	var faixa: Vector2i = Andares.info(andar)["salas"]
 	while true:
-		var a := _tentar(rng)
+		var a := _tentar(rng, faixa)
 		if not a.is_empty():
 			return a
 	return {}
 
 
-static func _tentar(rng: RandomNumberGenerator) -> Dictionary:
-	var alvo := rng.randi_range(9, 12)
+static func _tentar(rng: RandomNumberGenerator, faixa: Vector2i) -> Dictionary:
+	var alvo := rng.randi_range(faixa.x, faixa.y)
 	var salas := {Vector2i.ZERO: COMBATE}
 	var ordem: Array[Vector2i] = [Vector2i.ZERO]
 	var tentativas := 0

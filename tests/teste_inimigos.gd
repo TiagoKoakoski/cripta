@@ -207,10 +207,10 @@ func teste_distribuicao() -> void:
 	var viu_mago := false
 	var no_max_um := true
 	for i in 300:
-		var perto := Andar.sortear_inimigos(rng, 1)
+		var perto := Andar.sortear_inimigos(rng, 1, 1)
 		perto_ok = perto_ok and perto.all(func(t: String) -> bool: return t in ["morcego", "slime", "aranha"])
-		var longe := Andar.sortear_inimigos(rng, 5)
+		var longe := Andar.sortear_inimigos(rng, 5, 3)
 		viu_mago = viu_mago or "mago" in longe
-		no_max_um = no_max_um and longe.count("mago") <= 1 and longe.count("olho") <= 1 and longe.size() == 5
+		no_max_um = no_max_um and longe.count("mago") <= 1 and longe.count("olho") <= 1 and longe.size() == 6
 	checa(perto_ok, "perto do início só morcego, slime e aranha")
-	checa(viu_mago and no_max_um, "longe aparece o mago; 5 inimigos; no máximo 1 olho e 1 mago")
+	checa(viu_mago and no_max_um, "andar 3 longe aparece o mago; 6 inimigos; no máximo 1 olho e 1 mago")

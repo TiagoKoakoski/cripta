@@ -7,7 +7,7 @@ var falhou := 0
 
 func _initialize() -> void:
 	for t: String in ["teste_inicio", "teste_dano_e_invencibilidade", "teste_morte", "teste_cura_limite",
-			"teste_itens", "teste_itens_de_tiro", "teste_itens_sem_repetir", "teste_recomeco_zera", "teste_recorde"]:
+			"teste_itens", "teste_itens_de_tiro", "teste_itens_sem_repetir", "teste_recomeco_zera", "teste_recorde", "teste_descer"]:
 		if call(t) != true:
 			falhou += 1
 			push_error("FALHOU %s: não terminou" % t)
@@ -142,4 +142,27 @@ func teste_recorde() -> bool:
 	p.terminar(false)
 	igual(p.recorde, 2, "recorde não cai")
 	p.apagar_recorde()
+	return true
+
+
+func teste_descer() -> bool:
+	var p := nova()
+	igual(p.andar_atual, 1, "começa no andar 1")
+	p.pegar_item("espada")
+	p.vida = 2
+	p.limpar_sala(Vector2i(1, 0))
+	p.limpar_sala(Vector2i(2, 0))
+	p.descer()
+	igual([p.andar_atual, p.andares_concluidos, p.vida, p.salas_limpas.size(), p.salas_total, p.dano],
+		[2, 1, 3, 0, 2, 2], "descer: andar 2, +2 de vida até o máximo, salas zeradas, itens mantidos")
+	p.vida = 2
+	p.vida_max = 6
+	p.descer()
+	igual([p.andar_atual, p.vida], [3, 4], "+2 de vida")
+	p.limpar_sala(Vector2i(0, 1))
+	igual(p.pontos(), 100 * 2 + 3, "pontos = 100 x andares concluídos + salas")
+	p.terminar(true)
+	igual(p.pontos(), 300 + 3, "vencer conclui o 3º andar")
+	p.comecar(9)
+	igual([p.andar_atual, p.andares_concluidos, p.salas_total], [1, 0, 0], "recomeço volta ao andar 1")
 	return true

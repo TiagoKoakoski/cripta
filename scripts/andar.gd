@@ -5,6 +5,8 @@ extends Node2D
 signal vitoria
 signal derrota
 signal sala_mudou(posicao: Vector2i)
+signal chefe_vencido
+signal desceu
 
 var partida: Partida
 var mapa: Dictionary
@@ -13,13 +15,31 @@ var sala: Sala
 var hud: Hud
 var visitadas := {}
 var _cfg := {}   # Vector2i -> dicionário de configuração da sala (fixo para o andar)
+var chefe_forcado := ""   # --chefe=<nome> e testes; vazio = sorteado da tabela do andar
+var _semente := 0
 
 
 func iniciar(p: Partida, semente: int) -> void:
 	partida = p
-	mapa = GeradorAndar.gerar(semente)
+	_semente = semente
+	_montar_andar()
+	if hud == null:
+		hud = Hud.new(partida, self)
+		add_child(hud)
+	entrar(mapa["inicio"], Vector2i.ZERO)
+
+
+func _montar_andar() -> void:
+	var n := partida.andar_atual
+	var info := Andares.info(n)
+	var semente := _semente * 7 + n * 1013
+	mapa = GeradorAndar.gerar(semente, n)
+	visitadas.clear()
+	_cfg.clear()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = semente * 31 + 7
+	var chefes: Array = info["chefes"]
+	var chefe: String = chefe_forcado if chefe_forcado != "" else chefes[rng.randi_range(0, chefes.size() - 1)]
 	var dist := GeradorAndar._distancias(mapa["salas"], mapa["inicio"])
 	var sorteados := []
 	for pos: Vector2i in mapa["salas"]:
@@ -28,35 +48,28 @@ func iniciar(p: Partida, semente: int) -> void:
 		for v: Vector2i in GeradorAndar.vizinhos(mapa["salas"], pos):
 			portas[v - pos] = mapa["salas"][v]
 		var cfg := {"tipo": tipo, "portas": portas, "layout": rng.randi_range(0, 3), "semente": rng.randi(),
-			"inimigos": _sortear_inimigos(rng, dist[pos]) if tipo == GeradorAndar.COMBATE else [],
+			"inimigos": Andar.sortear_inimigos(rng, dist[pos], n) if tipo == GeradorAndar.COMBATE else [],
+			"tema": info["tema"], "mult_vida": info["mult_vida"], "chefe": chefe,
 			"coracao": tipo == GeradorAndar.COMBATE and rng.randf() < 0.3}
 		if tipo == GeradorAndar.TESOURO:
 			cfg["item"] = partida.sortear_item(sorteados)
 			sorteados.append(cfg["item"])
 		_cfg[pos] = cfg
-	hud = Hud.new(partida, self)
-	add_child(hud)
-	entrar(mapa["inicio"], Vector2i.ZERO)
 
 
-func _sortear_inimigos(rng: RandomNumberGenerator, dist: int) -> Array:
-	return Andar.sortear_inimigos(rng, dist)
-
-
-## perto do início: morcego/slime/aranha; no meio entram esqueleto/fantasma/olho; longe, o mago.
-## Atiradores (olho, mago) no máximo 1 de cada por sala.
-static func sortear_inimigos(rng: RandomNumberGenerator, dist: int) -> Array:
-	var n := clampi(1 + dist, 2, 5)
-	var tipos := ["morcego", "slime", "aranha"]
-	if dist >= 2:
-		tipos += ["esqueleto", "fantasma", "olho"]
-	if dist >= 4:
-		tipos += ["mago"]
+## perto do início: os inimigos "perto" do andar; a partir de DIST_LONGE entram também os "longe".
+## Quantidade clamp(1+dist, 2, 5) + (andar-1), máx. 6. Atiradores (olho, mago) no máximo 1 de cada.
+static func sortear_inimigos(rng: RandomNumberGenerator, dist: int, andar := 1) -> Array:
+	var info := Andares.info(andar)
+	var n := mini(6, clampi(1 + dist, 2, 5) + andar - 1)
+	var tipos: Array = info["perto"].duplicate()
+	if dist >= Andares.DIST_LONGE:
+		tipos += info["longe"]
 	var out := []
 	for i in n:
 		var t: String = tipos[rng.randi_range(0, tipos.size() - 1)]
 		if t in ["olho", "mago"] and t in out:
-			t = "morcego"
+			t = "aranha"
 		out.append(t)
 	return out
 
@@ -70,6 +83,7 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 	var cfg: Dictionary = _cfg[pos].duplicate()
 	cfg["limpa"] = partida.salas_limpas.has(pos) or cfg["tipo"] == GeradorAndar.INICIO
 	cfg["entrada"] = entrada
+	cfg["alcapao"] = cfg["limpa"] and cfg["tipo"] == GeradorAndar.CHEFE and partida.andar_atual < Andares.TOTAL
 	sala = Sala.new()
 	sala.configurar(cfg, partida)
 	sala.saiu.connect(func(d: Vector2i) -> void: _mudar.call_deferred(pos + d, -d))
@@ -81,9 +95,24 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 	sala.jogador_morreu.connect(func() -> void: derrota.emit())
 	sala.chefe_morto.connect(func() -> void:
 		partida.limpar_sala(pos)
-		vitoria.emit())
+		if partida.andar_atual >= Andares.TOTAL:
+			vitoria.emit()
+		else:
+			sala.mostrar_alcapao()
+			chefe_vencido.emit())
+	sala.alcapao_pisado.connect(_descer, CONNECT_DEFERRED)
 	add_child(sala)
 	sala_mudou.emit(pos)
+
+
+func _descer() -> void:
+	if partida.morto():
+		return
+	partida.descer()
+	_montar_andar()
+	entrar(mapa["inicio"], Vector2i.ZERO)
+	Sons.tocar("porta")
+	desceu.emit()
 
 
 func _mudar(pos: Vector2i, entrada: Vector2i) -> void:
