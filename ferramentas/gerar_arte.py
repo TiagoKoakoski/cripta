@@ -403,6 +403,13 @@ def main():
     salvar(pintar([N.OLHO, N.OLHO_2], ("#d0f6ff", "#2a6a9a")), "olho_abismo")
     salvar(pintar([N.LICH, N.LICH_2], ("#e0c8ff", "#4a2a7a")), "lich")
     salvar(pintar([N.TEIA], ("#ffffff", "#c8c8d8")), "poca_teia")
+    # subchefes: versões de elite dos inimigos comuns
+    salvar(pintar([h.MORCEGO, h.MORCEGO_2], ("#ffd0d0", "#a02040")), "morcego_vampiro")
+    salvar(pintar([N.com_coroa(h.ESQUELETO, (0, 1, 2)) if False else h.ESQUELETO, h.ESQUELETO_2], ("#fff0c0", "#b08030")), "esqueleto_capitao")
+    salvar(pintar([N.ARANHA, N.ARANHA_2], ("#f4f4ff", "#7a7a9a")), "aranha_tecela")
+    salvar(pintar([N.SLIME_MAE, N.SLIME_MAE_2], ("#e8c8ff", "#7a3aa0")), "slime_rei")
+    salvar(pintar([N.MAGO, N.MAGO_2], ("#ff9ad0", "#3a1a4a")), "mago_sombrio")
+    salvar(pintar([N.FANTASMA, N.FANTASMA_2], ("#d8ffe8", "#5a9a7a")), "fantasma_antigo")
     salvar(pintar([h.HEROI_BAIXO, h.HEROI_BAIXO_2, h.HEROI_DIR, h.HEROI_DIR_2, h.HEROI_CIMA, h.HEROI_CIMA_2,
                    h.espelhar(h.HEROI_DIR), h.espelhar(h.HEROI_DIR_2)], ("#ffd8c8", "#c0392b")), "espadachim")
     salvar(sombra(), "sombra")
