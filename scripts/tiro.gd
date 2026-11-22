@@ -137,11 +137,16 @@ func _quicar(b: StaticBody2D) -> void:
 
 
 func _explodir(atingido: Inimigo) -> void:
-	var dano_area := maxi(1, dano / 2)
-	for n: Node in get_tree().get_nodes_in_group("inimigo"):
+	Tiro.explodir_em(get_parent(), global_position, dano, atingido)
+
+
+## explosão (metade do dano, mínimo 1) nos inimigos vivos a até RAIO_EXPLOSAO de `pos`
+static func explodir_em(pai: Node, pos: Vector2, dano_: int, excluido: Inimigo) -> void:
+	var dano_area := maxi(1, dano_ / 2)
+	for n: Node in pai.get_tree().get_nodes_in_group("inimigo"):
 		var e := n as Inimigo
-		if e == null or e == atingido or not e.vivo():
+		if e == null or e == excluido or not e.vivo():
 			continue
-		if e.global_position.distance_to(global_position) <= RAIO_EXPLOSAO:
-			e.levar_tiro(dano_area, (e.global_position - global_position).normalized())
-	Efeitos.explosao(get_parent(), global_position)
+		if e.global_position.distance_to(pos) <= RAIO_EXPLOSAO:
+			e.levar_tiro(dano_area, (e.global_position - pos).normalized())
+	Efeitos.explosao(pai, pos)

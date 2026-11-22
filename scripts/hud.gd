@@ -15,6 +15,18 @@ const DESCRICOES := {"espada": "dano +1", "raio": "atira mais rápido", "coracao
 	"teleguiado": "o tiro persegue inimigos", "explosivo": "o tiro explode", "gelo": "o tiro congela",
 	"retaguarda": "atira também para trás"}
 
+const DESCRICOES_ESPADACHIM := {"tiro_triplo": "golpe em arco largo", "alcance": "golpe mais longo",
+	"ricochete": "devolve tiros inimigos", "perfurante": "golpe com avanço",
+	"teleguiado": "lâmina teleguiada a cada 3 golpes", "explosivo": "quem morre no golpe explode",
+	"gelo": "o golpe congela", "retaguarda": "golpeia também para trás"}
+
+
+static func descricao(item: String, quem: String) -> String:
+	if quem == "espadachim" and DESCRICOES_ESPADACHIM.has(item):
+		return DESCRICOES_ESPADACHIM[item]
+	return DESCRICOES.get(item, "")
+
+
 var partida: Partida
 var andar: Node
 var _coracoes: Array[Sprite2D] = []
@@ -58,7 +70,7 @@ func _init(p: Partida, a: Node) -> void:
 func anunciar(item: String) -> void:
 	if not NOMES.has(item):
 		return
-	_aviso.text = "%s\n%s" % [NOMES[item], DESCRICOES[item]]
+	_aviso.text = "%s\n%s" % [NOMES[item], Hud.descricao(item, partida.personagem)]
 	_aviso.visible = true
 	_aviso.modulate.a = 1.0
 	_aviso_t = 2.5

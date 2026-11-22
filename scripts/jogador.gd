@@ -12,19 +12,21 @@ var _passo := 0.0
 var _olhar := Vector2.DOWN
 var _sprite: Sprite2D
 var _corpo: Area2D
+var arma: RefCounted   # ArmaTiro ou ArmaLamina
 
 
 static func criar(p: Partida, sala_: Node2D, pos: Vector2) -> Jogador:
 	var j := Jogador.new()
 	j.partida = p
 	j.sala = sala_
+	j.arma = ArmaLamina.new() if p.personagem == "espadachim" else ArmaTiro.new()
 	j.position = pos
 	j.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	j.collision_layer = Camadas.JOGADOR
 	j.collision_mask = Camadas.PAREDE | Camadas.PILAR
 	Efeitos.sombra_para(j, 1.0)
 	j._sprite = Sprite2D.new()
-	j._sprite.texture = load("res://arte/heroi.png")
+	j._sprite.texture = load("res://arte/%s.png" % ("espadachim" if p.personagem == "espadachim" else "heroi"))
 	j._sprite.hframes = 8
 	j.add_child(j._sprite)
 	var c := CollisionShape2D.new()
@@ -83,19 +85,7 @@ static func _cardinal(v: Vector2) -> Vector2:
 
 func _atirar(dir: Vector2) -> void:
 	_recarga = partida.cadencia
-	var vel := 240.0 if partida.alcance else 180.0
-	var dur := 0.9 if partida.alcance else 0.6
-	var dirs: Array[Vector2] = [dir]
-	if partida.tiro_triplo:
-		dirs.append(dir.rotated(deg_to_rad(15)))
-		dirs.append(dir.rotated(deg_to_rad(-15)))
-	if partida.retaguarda:
-		dirs.append(-dir)
-	for d: Vector2 in dirs:
-		var t := Tiro.criar(position + d * 8.0, d, true, partida.dano, vel, dur)
-		t.aplicar_build(partida)
-		sala.add_child(t)
-	Sons.tocar("tiro")
+	arma.atacar(self, dir)
 
 
 func ferir() -> void:

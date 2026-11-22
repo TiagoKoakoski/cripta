@@ -5,6 +5,10 @@ extends RefCounted
 const ITENS: Array[String] = ["espada", "raio", "coracao_extra", "botas", "tiro_triplo", "alcance",
 	"ricochete", "perfurante", "teleguiado", "explosivo", "gelo", "retaguarda"]
 const ITENS_DE_TIRO: Array[String] = ["ricochete", "perfurante", "teleguiado", "explosivo", "gelo", "retaguarda"]
+const PERSONAGENS: Array[String] = ["atirador", "espadachim"]
+## vida, velocidade, dano, cadência de cada personagem
+const BASE := {"atirador": [3, 70.0, 1, 0.4], "espadachim": [4, 80.0, 2, 0.45]}
+const VERSAO_SAVE := 3
 const VIDA_INICIAL := 3
 const VIDA_MAXIMA := 8
 const INVENCIBILIDADE := 1.0
@@ -30,20 +34,23 @@ var andar_atual := 1
 var andares_concluidos := 0
 var salas_total := 0       # salas limpas dos andares já deixados para trás
 var semente := 0
+var personagem := "atirador"
 var recorde := 0
 var venceu := false
-var arquivo_recorde := "user://recorde.cfg"
+var arquivo_recorde := "user://progresso.cfg"
 var _rng := RandomNumberGenerator.new()
 
 
-func comecar(nova_semente: int) -> void:
+func comecar(nova_semente: int, quem := "atirador") -> void:
 	semente = nova_semente
+	personagem = quem if quem in PERSONAGENS else "atirador"
 	_rng.seed = nova_semente * 7919 + 13
-	vida = VIDA_INICIAL
-	vida_max = VIDA_INICIAL
-	dano = 1
-	cadencia = 0.4
-	velocidade = VELOCIDADE
+	var b: Array = BASE[personagem]
+	vida = b[0]
+	vida_max = b[0]
+	velocidade = b[1]
+	dano = b[2]
+	cadencia = b[3]
 	tiro_triplo = false
 	alcance = false
 	for it: String in ITENS_DE_TIRO:
@@ -135,13 +142,22 @@ func terminar(vitoria: bool) -> void:
 	if pontos_ > recorde:
 		recorde = pontos_
 		var cfg := ConfigFile.new()
-		cfg.set_value("cripta", "recorde", recorde)
+		cfg.load(arquivo_recorde)   # mantém o recorde dos outros personagens
+		cfg.set_value("save", "versao", VERSAO_SAVE)
+		cfg.set_value(personagem, "recorde", recorde)
 		cfg.save(arquivo_recorde)
 
 
 func carregar_recorde() -> void:
+	recorde = recorde_de(personagem)
+
+
+## recorde salvo de um personagem (0 se não houver ou se o arquivo for de outra versão)
+func recorde_de(quem: String) -> int:
 	var cfg := ConfigFile.new()
-	recorde = int(cfg.get_value("cripta", "recorde", 0)) if cfg.load(arquivo_recorde) == OK else 0
+	if cfg.load(arquivo_recorde) != OK or int(cfg.get_value("save", "versao", 0)) != VERSAO_SAVE:
+		return 0
+	return int(cfg.get_value(quem, "recorde", 0))
 
 
 func apagar_recorde() -> void:
