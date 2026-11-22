@@ -16,7 +16,7 @@ func _rodar() -> void:
 			"teste_invencibilidade", "teste_slime_divide_e_sala_abre", "teste_spawn_longe_da_porta",
 			"teste_parede_segura", "teste_quatro_morcegos_limpam", "teste_porta_trancada",
 			"teste_montar_durante_fisica_tranca",
-			"teste_inimigo_morto_nao_fere", "teste_coracao_ao_limpar", "teste_coracao_vida_cheia", "teste_tremor", "teste_pontos_sem_pilar"]:
+			"teste_inimigo_morto_nao_fere", "teste_coracao_ao_limpar", "teste_coracao_vida_cheia", "teste_tremor", "teste_pontos_sem_pilar", "teste_portas_por_tipo"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -268,3 +268,33 @@ func teste_pontos_sem_pilar() -> void:
 					ruins.append([layout, pt])
 		await desmontar(sala)
 	checa(ruins.is_empty(), "nenhum ponto de nascimento/teleporte encosta em pilar %s" % [ruins])
+
+
+func _texturas(no: Node) -> Array:
+	var out := []
+	for c: Node in no.get_children():
+		if c is Sprite2D and (c as Sprite2D).texture:
+			out.append((c as Sprite2D).texture.resource_path)
+		out += _texturas(c)
+	return out
+
+
+func teste_portas_por_tipo() -> void:
+	var partida := Partida.new()
+	partida.arquivo_recorde = "user://teste_recorde.cfg"
+	partida.comecar(1)
+	var sala := Sala.new()
+	root.add_child(sala)
+	sala.configurar({"tipo": GeradorAndar.COMBATE, "layout": 0, "limpa": true, "entrada": Vector2i.ZERO,
+		"chefe_trancado": true, "portas": {Vector2i.UP: GeradorAndar.TESOURO, Vector2i.DOWN: GeradorAndar.CHEFE,
+		Vector2i.LEFT: GeradorAndar.FONTE, Vector2i.RIGHT: GeradorAndar.SUBCHEFE}}, partida)
+	var tex := _texturas(sala)
+	checa(not tex.any(func(t: String) -> bool: return t.contains("icone_")), "portas sem ícone em cima")
+	checa(sala.textura_porta(Vector2i.UP).ends_with("porta_tesouro.png"), "porta do tesouro é dourada")
+	checa(sala.textura_porta(Vector2i.LEFT).ends_with("porta_fonte.png"), "porta da fonte")
+	checa(sala.textura_porta(Vector2i.RIGHT).ends_with("porta_subchefe.png"), "porta do subchefe")
+	checa(sala.textura_porta(Vector2i.DOWN).ends_with("porta_chefe_trancada.png"), "porta do chefe com cadeado sem chave")
+	partida.tem_chave = true
+	sala.destrancar_chefe()
+	checa(sala.textura_porta(Vector2i.DOWN).ends_with("porta_chefe.png"), "com a chave, porta do chefe aberta")
+	await desmontar(sala)

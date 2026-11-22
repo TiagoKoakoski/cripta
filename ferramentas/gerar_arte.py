@@ -268,6 +268,59 @@ CHAVE = [
 ]
 
 
+ESTILO_PORTA = {   # moldura, luz da moldura, enfeite
+    "inicio": ("#5a4a6a", "#7a6a8a", None),
+    "combate": ("#6a4a30", "#8a6440", None),
+    "tesouro": ("#c8942a", "#ffe080", "#fff6c0"),
+    "fonte": ("#3a6a8a", "#6aa8c8", "#a8e0ff"),
+    "subchefe": ("#8a2a2a", "#c04a4a", "#9a9aaa"),
+    "chefe": ("#c8c0ac", "#ece6d8", "#2a2030"),
+}
+
+
+def porta_tipo(tipo, trancada=False):
+    """Vão de porta com moldura no estilo do tipo da sala do outro lado (sem ícone)."""
+    mold, luz, enfeite = (rgba(c) if c else None for c in ESTILO_PORTA[tipo])
+    escuro, cont = rgba("#0a080d"), rgba("#140f19")
+    im = Image.new("RGBA", (16, 16), escuro)
+    for y in range(16):
+        for x in range(16):
+            cor = escuro
+            if y < 3 or x < 2 or x > 13:
+                cor = luz if (y == 0 or x == 0) else mold
+                if y == 2 or x == 1 or x == 14:
+                    cor = cont if (y == 2 and 2 <= x <= 13) else cor
+            im.putpixel((x, y), cor)
+    if tipo == "tesouro":
+        for x, y in ((4, 1), (8, 1), (12, 1), (0, 6), (15, 9), (0, 12)):
+            im.putpixel((x, y), enfeite)
+    elif tipo == "fonte":
+        for x, y in ((5, 4), (9, 6), (6, 9), (11, 11), (4, 13)):
+            im.putpixel((x, y), enfeite)
+    elif tipo == "subchefe":
+        for y in range(3, 16, 2):   # corrente nas laterais
+            im.putpixel((0, y), enfeite)
+            im.putpixel((15, y), enfeite)
+    elif tipo == "chefe":
+        for x0 in (3, 9):   # crânios no lintel
+            for dx, dy in ((0, 0), (2, 0), (1, 1)):
+                im.putpixel((x0 + dx + 1, dy), enfeite)
+    if trancada:
+        barra, ouro, ouro_e = rgba("#8a7a5a"), rgba("#ffd050"), rgba("#a07820")
+        for y in range(3, 16):
+            for x in range(3, 13, 3):
+                im.putpixel((x, y), barra)
+        for y in range(7, 13):
+            for x in range(5, 11):
+                im.putpixel((x, y), ouro if y > 8 else ouro_e)
+        for x in (6, 9):
+            for y in (5, 6):
+                im.putpixel((x, y), ouro_e)
+        im.putpixel((7, 10), cont)
+        im.putpixel((8, 10), cont)
+    return im
+
+
 def porta(fechada):
     linhas = []
     for y in range(16):
@@ -359,6 +412,9 @@ def main():
     salvar(vinheta(), "vinheta")
     salvar(porta(True), "porta_fechada")
     salvar(porta(False), "porta_aberta")
+    for tipo in ESTILO_PORTA:
+        salvar(porta_tipo(tipo), f"porta_{tipo}")
+    salvar(porta_tipo("chefe", True), "porta_chefe_trancada")
     salvar(tela_texto("CRIPTA", 4, "#e0b040"), "titulo")
     salvar(tela_texto("FIM", 4, "#d43a4a"), "texto_fim")
     salvar(tela_texto("VITORIA", 4, "#e0b040"), "texto_vitoria")

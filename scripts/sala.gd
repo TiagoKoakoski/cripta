@@ -16,8 +16,10 @@ signal chave_pega
 const T := 16
 const COLS := 20
 const LINS := 11
-const ICONE := {GeradorAndar.COMBATE: "icone_combate", GeradorAndar.TESOURO: "icone_tesouro",
-	GeradorAndar.FONTE: "icone_fonte", GeradorAndar.CHEFE: "icone_chefe", GeradorAndar.INICIO: ""}
+## estilo da porta pelo tipo da sala do outro lado (sem ícone: a moldura dá a pista, como no Isaac)
+const PORTA := {GeradorAndar.COMBATE: "porta_combate", GeradorAndar.TESOURO: "porta_tesouro",
+	GeradorAndar.FONTE: "porta_fonte", GeradorAndar.CHEFE: "porta_chefe", GeradorAndar.INICIO: "porta_inicio",
+	GeradorAndar.SUBCHEFE: "porta_subchefe"}
 ## pilares por layout (tiles); nunca na linha 5 nem nas colunas 9-10 (corredores das portas)
 const LAYOUTS := [
 	[Vector2i(4, 3), Vector2i(15, 3), Vector2i(4, 7), Vector2i(15, 7)],
@@ -538,13 +540,6 @@ func _criar_porta(d: Vector2i, tipo_vizinho: int) -> void:
 	no.add_child(grade)
 	for t: Vector2i in _tiles_porta(d):
 		_solido(t, Camadas.PAREDE, grade)
-	if ICONE.get(tipo_vizinho, "") != "":
-		var ic := Sprite2D.new()
-		ic.texture = load("res://arte/%s.png" % ICONE[tipo_vizinho])
-		ic.position = centro_porta(d) + Vector2(d) * -14.0
-		ic.z_index = -8
-		ic.modulate = Color(1, 1, 1, 0.85)
-		no.add_child(ic)
 	var gatilho := Area2D.new()
 	gatilho.collision_layer = 0
 	gatilho.collision_mask = Camadas.JOGADOR
@@ -561,12 +556,20 @@ func _criar_porta(d: Vector2i, tipo_vizinho: int) -> void:
 	_portas[d] = {"grade": grade, "sprites": sprites}
 
 
+func textura_porta(d: Vector2i) -> String:
+	var tipo_v: int = _tipo_porta.get(d, GeradorAndar.COMBATE)
+	if tipo_v == GeradorAndar.CHEFE and _chefe_trancado and not partida.tem_chave:
+		return "res://arte/porta_chefe_trancada.png"
+	if porta_trancada(d):
+		return "res://arte/porta_fechada.png"
+	return "res://arte/%s.png" % PORTA.get(tipo_v, "porta_combate")
+
+
 func _atualizar_portas() -> void:
-	var fechada: Texture2D = load("res://arte/porta_fechada.png")
-	var aberta_: Texture2D = load("res://arte/porta_aberta.png")
 	for d: Vector2i in _portas:
 		var fechar := porta_trancada(d)
+		var tex: Texture2D = load(textura_porta(d))
 		for s: Sprite2D in _portas[d]["sprites"]:
-			s.texture = fechada if fechar else aberta_
+			s.texture = tex
 		for b: Node in (_portas[d]["grade"] as Node2D).get_children():
 			(b as StaticBody2D).collision_layer = Camadas.PAREDE if fechar else 0
