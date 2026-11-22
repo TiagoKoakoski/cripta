@@ -282,7 +282,7 @@ func objeto_usado() -> bool:
 # ------------------------------------------------------------------ montagem
 
 func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
-	var chao := [load("res://arte/chao.png"), load("res://arte/chao2.png")]
+	var chao := [load("res://arte/chao.png"), load("res://arte/chao2.png"), load("res://arte/chao3.png")]
 	var parede: Texture2D = load("res://arte/parede.png")
 	var pilar: Texture2D = load("res://arte/pilar.png")
 	var vaos := {}
@@ -294,7 +294,8 @@ func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
 		for x in COLS:
 			var t := Vector2i(x, y)
 			var borda := x == 0 or y == 0 or x == COLS - 1 or y == LINS - 1
-			var tex: Texture2D = chao[1 if (x * 7 + y * 3) % 5 == 0 else 0]
+			var v := (x * 7 + y * 13 + x * y) % 9
+			var tex: Texture2D = chao[2 if v == 0 else (1 if v < 3 else 0)]
 			if borda and not vaos.has(t):
 				tex = parede
 				_solido(t, Camadas.PAREDE)
@@ -311,6 +312,46 @@ func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
 			add_child(s)
 	for d: Vector2i in portas:
 		_criar_porta(d, portas[d])
+	_decorar()
+
+
+var _tochas: Array[Sprite2D] = []
+var _brilhos: Array[Sprite2D] = []
+var _t_deco := 0.0
+
+
+## tochas na parede de cima (com brilho aditivo) e vinheta escurecendo as bordas
+func _decorar() -> void:
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	for x: int in [4, 15]:
+		var t := Sprite2D.new()
+		t.texture = load("res://arte/tocha.png")
+		t.hframes = 2
+		t.position = Vector2(x * T + 8, 9)
+		t.z_index = -7
+		add_child(t)
+		_tochas.append(t)
+		var b := Sprite2D.new()
+		b.texture = load("res://arte/brilho.png")
+		b.material = mat
+		b.position = t.position + Vector2(0, 6)
+		b.z_index = -6
+		add_child(b)
+		_brilhos.append(b)
+	var v := Sprite2D.new()
+	v.texture = load("res://arte/vinheta.png")
+	v.centered = false
+	v.z_index = 30
+	add_child(v)
+
+
+func _process(delta: float) -> void:
+	_t_deco += delta
+	for i in _tochas.size():
+		_tochas[i].frame = int(_t_deco * 6.0 + i) % 2
+		var f := 1.0 + 0.08 * sin(_t_deco * 11.0 + i * 2.0) + 0.05 * sin(_t_deco * 23.0)
+		_brilhos[i].scale = Vector2(f, f)
 
 
 func _tiles_porta(d: Vector2i) -> Array[Vector2i]:

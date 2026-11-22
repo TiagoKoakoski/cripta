@@ -15,7 +15,7 @@ func _rodar() -> void:
 			"teste_fonte_uma_vez", "teste_chefe_morto_vence", "teste_morte_derrota", "teste_hud",
 			"teste_minimapa_revela",
 			"teste_chefe_longe_da_entrada", "teste_minimapa_dentro_do_canto", "teste_dois_tesouros_diferentes",
-			"teste_coracao_persiste", "teste_coracao_sorteado"]:
+			"teste_coracao_persiste", "teste_coracao_sorteado", "teste_hud_itens"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -262,3 +262,16 @@ func teste_coracao_sorteado() -> void:
 		await fim(a)
 	var taxa := float(com) / total
 	checa(taxa > 0.2 and taxa < 0.4, "cerca de 30%% das salas de combate soltam coração (%.2f)" % taxa)
+
+
+func teste_hud_itens() -> void:
+	var a := novo_andar()
+	var t := sala_do_tipo(a, GeradorAndar.TESOURO)
+	var item: String = a._cfg[t]["item"]
+	a.entrar(t, Vector2i.DOWN)
+	await frames(3)
+	await tocar_objeto(a)
+	await frames(2)
+	checa(a.hud.icones_itens() == 1, "HUD mostra o ícone do item pego (%d)" % a.hud.icones_itens())
+	checa(a.hud.mensagem().begins_with(Hud.NOMES[item]), "HUD anuncia o item: '%s'" % a.hud.mensagem())
+	await fim(a)

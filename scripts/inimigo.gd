@@ -54,13 +54,16 @@ static func criar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, 
 	e.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	e.collision_layer = Camadas.INIMIGO
 	e.collision_mask = Camadas.PAREDE if tipo_ in VOADORES else Camadas.PAREDE | Camadas.PILAR
+	Efeitos.sombra_para(e, 6.0 if tipo_ in VOADORES else 0.0)
 	e._sprite = Sprite2D.new()
 	e._sprite.texture = load("res://arte/%s.png" % SPRITE[tipo_])
 	e._sprite.hframes = 2
+	if tipo_ == "rei":
+		e._sprite.scale = Vector2(1.5, 1.5)
 	e.add_child(e._sprite)
 	var c := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
-	r.size = Vector2(12, 10) if tipo_ != "slime_pequeno" else Vector2(8, 7)
+	r.size = Vector2(18, 15) if tipo_ == "rei" else (Vector2(12, 10) if tipo_ != "slime_pequeno" else Vector2(8, 7))
 	c.shape = r
 	c.position = Vector2(0, 2)
 	e.add_child(c)

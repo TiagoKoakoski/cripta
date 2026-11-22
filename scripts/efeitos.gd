@@ -38,3 +38,12 @@ static func morte(pai: Node, pos: Vector2, cor: Color) -> void:
 
 static func explosao(pai: Node, pos: Vector2) -> void:
 	_particulas(pai, pos, Color(1, 0.6, 0.25), 18, 110.0, 0.35)
+
+
+static func sombra_para(no: Node2D, dy := 0.0) -> void:
+	var s := Sprite2D.new()
+	s.texture = load("res://arte/sombra.png")
+	s.position = Vector2(0, dy)
+	s.z_index = -1
+	s.show_behind_parent = true
+	no.add_child(s)

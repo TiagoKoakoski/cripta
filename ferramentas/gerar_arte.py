@@ -24,7 +24,7 @@ def rgba(h):
 # paleta por sprite: 'w' claro, 'g' médio ('k' é sempre o contorno)
 PALETAS = {
     "heroi": ("#f2e6c9", "#4a7fbf"),
-    "morcego": ("#e8d0ff", "#7a4a9a"),
+    "morcego": ("#f4e2ff", "#a274d6"),
     "slime": ("#bff2a8", "#3fa34d"),
     "slime_p": ("#d8ffc8", "#5cc46a"),
     "esqueleto": ("#ece6d8", "#a89c8a"),
@@ -43,15 +43,31 @@ PALETAS = {
 }
 
 
-def pintar(frames, paleta):
+def misturar(a, b, t):
+    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3)) + (255,)
+
+
+def pintar(frames, paleta, sombrear=True):
+    """Pinta sprites em texto. Com sombrear: contorno escuro na cor do sprite, sombra no 'g' que
+    encosta em borda embaixo/à direita e brilho no 'w' que encosta em borda em cima/à esquerda."""
     w, g = paleta
-    cores = {".": TRANSP, "w": rgba(w), "g": rgba(g), "k": rgba(CONTORNO)}
+    cw, cg = rgba(w), rgba(g)
+    preto = rgba(CONTORNO)
+    cores = {".": TRANSP, "w": cw, "g": cg, "k": misturar(preto, cg, 0.25) if sombrear else preto}
+    sombra = misturar(cg, preto, 0.38)
+    brilho = misturar(cw, (255, 255, 255), 0.45)
     im = Image.new("RGBA", (16 * len(frames), 16), TRANSP)
     for i, f in enumerate(frames):
         assert len(f) == 16 and all(len(l) == 16 for l in f), f
+        px = lambda x, y: f[y][x] if 0 <= x < 16 and 0 <= y < 16 else "."
         for y, l in enumerate(f):
             for x, c in enumerate(l):
-                im.putpixel((16 * i + x, y), cores[c])
+                cor = cores[c]
+                if sombrear and c == "g" and (px(x, y + 1) in "k." or px(x + 1, y) in "k."):
+                    cor = sombra
+                elif sombrear and c == "w" and (px(x, y - 1) in "k." or px(x - 1, y) in "k."):
+                    cor = brilho
+                im.putpixel((16 * i + x, y), cor)
     return im
 
 
@@ -105,6 +121,105 @@ PILAR = ["1111111111111111", "1222222222222221", "1233333333333321", "1232222222
          "1232333333332321", "1232333333332321", "1232333333332321", "1232333333332321", "1232333333332321",
          "1232333333332321", "1232333333332321", "1232222222222321", "1233333333333321", "1222222222222221", "1111111111111111"]
 CORES_SALA = {"0": "#2b2433", "1": "#3b3245", "2": "#5a4a6a", "3": "#1a1520"}
+
+
+import random
+
+
+def chao(semente):
+    """Laje de pedra 16x16: rejunte escuro em cima/à esquerda, pontos claros e escuros."""
+    r = random.Random(semente)
+    base, rej, claro, escuro = rgba("#3a3044"), rgba("#241d2b"), rgba("#4a3f55"), rgba("#30283a")
+    im = Image.new("RGBA", (16, 16), base)
+    for y in range(16):
+        for x in range(16):
+            if y == 0 or x == 0:
+                im.putpixel((x, y), rej)
+            elif y == 1 or x == 1:
+                im.putpixel((x, y), claro)
+            elif r.random() < 0.07:
+                im.putpixel((x, y), r.choice([claro, escuro, escuro]))
+    if semente % 2:   # rachadura
+        x, y = r.randint(4, 10), r.randint(4, 10)
+        for _ in range(5):
+            im.putpixel((x, y), rej)
+            x, y = x + r.choice([0, 1]), y + 1
+    return im
+
+
+def parede():
+    """Tijolos com rejunte, brilho em cima de cada tijolo e base em sombra."""
+    rej, tij, luz, somb = rgba("#1f1926"), rgba("#4d4060"), rgba("#65577a"), rgba("#3a3049")
+    im = Image.new("RGBA", (16, 16), tij)
+    for y in range(16):
+        linha = y // 4
+        desloc = 4 if linha % 2 else 0
+        for x in range(16):
+            yy = y % 4
+            junta = (x + desloc) % 8 == 0
+            if yy == 0 or junta:
+                cor = rej
+            elif yy == 1:
+                cor = luz
+            elif yy == 3:
+                cor = somb
+            else:
+                cor = tij
+            im.putpixel((x, y), cor)
+    return im
+
+
+def pilar():
+    """Bloco em perspectiva: topo claro (6 px) e frente escura com tijolos."""
+    cont, topo, topo_b, frente, frente_e = (rgba("#140f19"), rgba("#7a6a90"), rgba("#9585aa"),
+                                            rgba("#4a3d5c"), rgba("#382d47"))
+    im = Image.new("RGBA", (16, 16), frente)
+    for y in range(16):
+        for x in range(16):
+            if x in (0, 15) or y in (0, 15):
+                cor = cont
+            elif y <= 5:
+                cor = topo_b if y == 1 or x == 1 else topo
+            elif y == 6:
+                cor = cont
+            elif (y - 7) % 4 == 3 or (x + (4 if ((y - 7) // 4) % 2 else 0)) % 8 == 0:
+                cor = frente_e
+            else:
+                cor = frente
+            im.putpixel((x, y), cor)
+    return im
+
+
+def sombra():
+    im = Image.new("RGBA", (16, 16), TRANSP)
+    for y in range(16):
+        for x in range(16):
+            dx, dy = (x - 7.5) / 6.0, (y - 14.0) / 2.2
+            if dx * dx + dy * dy <= 1.0:
+                im.putpixel((x, y), (0, 0, 0, 90))
+    return im
+
+
+def brilho_tocha(n=48):
+    im = Image.new("RGBA", (n, n), TRANSP)
+    c = (n - 1) / 2
+    for y in range(n):
+        for x in range(n):
+            d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5 / c
+            if d < 1:
+                im.putpixel((x, y), (255, 170, 80, int(70 * (1 - d) ** 2)))
+    return im
+
+
+def vinheta(w=320, h=176):
+    im = Image.new("RGBA", (w, h), TRANSP)
+    for y in range(h):
+        for x in range(w):
+            dx, dy = (x - w / 2) / (w / 2), (y - h / 2) / (h / 2)
+            d = (dx * dx + dy * dy) ** 0.5
+            if d > 0.75:
+                im.putpixel((x, y), (8, 4, 12, min(150, int((d - 0.75) * 260))))
+    return im
 
 
 def porta(fechada):
@@ -163,23 +278,30 @@ def main():
              "botas": h.ITEM_BOTAS, "tiro_triplo": TRIPLO, "alcance": ALCANCE,
              "ricochete": N.ITEM_RICOCHETE, "perfurante": N.ITEM_PERFURANTE, "teleguiado": N.ITEM_TELEGUIADO,
              "explosivo": N.ITEM_EXPLOSIVO, "gelo": N.ITEM_GELO, "retaguarda": N.ITEM_RETAGUARDA}
+    cor_item = {"explosivo": ("#ffb060", "#505060"), "gelo": ("#e0f6ff", "#5aa8e0"),
+                "teleguiado": ("#f0d0ff", "#9a5ad0"), "perfurante": ("#e0ffd0", "#5aa060"),
+                "ricochete": ("#d0fff6", "#3a9a9a"), "retaguarda": ("#fff2b0", "#c87a40")}
     for n, f in itens.items():
-        salvar(pintar([f], PALETAS["item"]), f"item_{n}")
+        salvar(pintar([f], cor_item.get(n, PALETAS["item"])), f"item_{n}")
     salvar(icone(h.CAVEIRA12, ("#ece6d8", "#a89c8a")), "icone_combate")
     salvar(icone(h.cheio12(h.BAU12), ("#fff2b0", "#c8a040")), "icone_tesouro")
     salvar(icone(h.cheio12(h.CORACAO12), ("#ffd0d6", "#d43a4a")), "icone_fonte")
     salvar(icone(COROA12, ("#fff2b0", "#e0b040")), "icone_chefe")
-    salvar(tile(CHAO, CORES_SALA), "chao")
-    salvar(tile(CHAO2, CORES_SALA), "chao2")
-    salvar(tile(PAREDE, CORES_SALA), "parede")
-    salvar(tile(PILAR, CORES_SALA), "pilar")
+    salvar(chao(1), "chao")
+    salvar(chao(2), "chao2")
+    salvar(chao(5), "chao3")
+    salvar(parede(), "parede")
+    salvar(pilar(), "pilar")
+    salvar(sombra(), "sombra")
+    salvar(brilho_tocha(), "brilho")
+    salvar(vinheta(), "vinheta")
     salvar(porta(True), "porta_fechada")
     salvar(porta(False), "porta_aberta")
     salvar(tela_texto("CRIPTA", 4, "#e0b040"), "titulo")
     salvar(tela_texto("FIM", 4, "#d43a4a"), "texto_fim")
     salvar(tela_texto("VITORIA", 4, "#e0b040"), "texto_vitoria")
     salvar(tela_texto("APERTE UM BOTAO", 1, "#d8c8b0"), "texto_aperte")
-    salvar(pintar([h.digito16(d) for d in range(10)], ("#f2e6c9", "#f2e6c9")), "digitos")
+    salvar(pintar([h.digito16(d) for d in range(10)], ("#f2e6c9", "#f2e6c9"), sombrear=False), "digitos")
 
 
 if __name__ == "__main__":

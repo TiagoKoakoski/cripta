@@ -22,6 +22,7 @@ static func criar(p: Partida, sala_: Node2D, pos: Vector2) -> Jogador:
 	j.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	j.collision_layer = Camadas.JOGADOR
 	j.collision_mask = Camadas.PAREDE | Camadas.PILAR
+	Efeitos.sombra_para(j, 1.0)
 	j._sprite = Sprite2D.new()
 	j._sprite.texture = load("res://arte/heroi.png")
 	j._sprite.hframes = 8

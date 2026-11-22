@@ -5,8 +5,10 @@ const SPRITES := {"heroi": 8, "morcego": 2, "slime": 2, "slime_pequeno": 2, "esq
 	"tiro": 1, "tiro_inimigo": 1, "coracao": 2, "fonte": 1, "pedestal": 1, "item_espada": 1, "item_raio": 1,
 	"item_coracao_extra": 1, "item_botas": 1, "item_tiro_triplo": 1, "item_alcance": 1, "icone_combate": 1,
 	"icone_tesouro": 1, "icone_fonte": 1, "icone_chefe": 1, "chao": 1, "chao2": 1, "parede": 1, "pilar": 1,
-	"porta_fechada": 1, "porta_aberta": 1, "digitos": 10}
-const OUTRAS := ["titulo", "texto_fim", "texto_vitoria", "texto_aperte"]
+	"porta_fechada": 1, "porta_aberta": 1, "digitos": 10, "chao3": 1, "aranha": 2, "fantasma": 2, "olho": 2,
+	"mago": 2, "tocha": 2, "sombra": 1, "coracao_chao": 1, "item_ricochete": 1, "item_perfurante": 1,
+	"item_teleguiado": 1, "item_explosivo": 1, "item_gelo": 1, "item_retaguarda": 1}
+const OUTRAS := ["titulo", "texto_fim", "texto_vitoria", "texto_aperte", "brilho", "vinheta"]
 const SONS := ["tiro", "acerto", "morte_inimigo", "dano", "item", "porta", "vitoria", "derrota", "fonte"]
 
 var falhou := 0

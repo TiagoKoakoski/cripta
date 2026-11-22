@@ -74,7 +74,9 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 	sala.configurar(cfg, partida)
 	sala.saiu.connect(func(d: Vector2i) -> void: _mudar.call_deferred(pos + d, -d))
 	sala.limpa.connect(func() -> void: partida.limpar_sala(pos))
-	sala.item_pego.connect(func(_i: String) -> void: partida.limpar_sala(pos))
+	sala.item_pego.connect(func(i: String) -> void:
+		partida.limpar_sala(pos)
+		hud.anunciar(i))
 	sala.coracao_pego.connect(func() -> void: _cfg[pos]["coracao"] = false)
 	sala.jogador_morreu.connect(func() -> void: derrota.emit())
 	sala.chefe_morto.connect(func() -> void:
