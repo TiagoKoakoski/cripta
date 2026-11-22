@@ -17,7 +17,7 @@ como no Slay the Spire. Morreu, recomeça num andar novo; o recorde fica salvo.
 | Começar / recomeçar | Enter, espaço ou qualquer seta | qualquer botão |
 
 - **Vida:** 3 corações (até 8). Levou dano, fica ~1 s piscando e invencível.
-- **Andar:** de 8 a 11 salas.
+- **Andar:** de 9 a 12 salas, com 2 tesouros.
   - **Portas:** trancam enquanto houver inimigo. Cada porta mostra o que vem do outro lado:
     **caveira** (combate), **baú** (tesouro), **coração** (fonte), **coroa** (chefe).
   - **Minimapa:** no canto.
@@ -26,14 +26,26 @@ como no Slay the Spire. Morreu, recomeça num andar novo; o recorde fica salvo.
   - **Morcego:** mergulha e recua.
   - **Slime:** anda à toa; o grande se divide em dois pequenos.
   - **Esqueleto:** fica parado e atira em você.
+  - **Aranha:** chega em saltos curtos e rápidos.
+  - **Fantasma:** persegue devagar e atravessa pilares.
+  - **Olho:** parado; atira em cruz e depois em X.
+  - **Mago:** some, reaparece longe de você e atira 3 tiros em leque.
+  - Todo inimigo leva meio segundo para surgir (pisca e não fere). Quanto mais longe do início, mais e mais fortes.
   - **Rei Esqueleto:** o chefe tem 30 de vida. Ele persegue você e solta rajadas em cruz, e em 8 direções quando ferido.
-- **Itens** (um por tesouro, sem repetir):
+- **Itens** (um por tesouro, sem repetir; os de tiro combinam entre si):
   - Espada: dano +1.
   - Raio: atira mais rápido.
   - Coração: +1 de vida máxima e cura 1.
   - Botas: anda mais rápido.
   - Tiro Triplo: dispara em leque.
   - Alcance: tiro mais longe e mais rápido.
+  - Ricochete: o tiro quica uma vez na parede.
+  - Perfurante: o tiro atravessa inimigos.
+  - Teleguiado: o tiro curva atrás do inimigo mais perto.
+  - Explosivo: o tiro explode e fere quem está em volta.
+  - Gelo: o inimigo atingido fica lento por 2 s.
+  - Retaguarda: atira também para trás.
+- **Coração no chão:** algumas salas soltam um coração ao serem limpas (cura 1; fica no chão se a vida estiver cheia).
 - **Fonte:** cura 2, uma vez.
 - **Recorde:** salas limpas, +100 se vencer. Salvo em `user://recorde.cfg`.
 
