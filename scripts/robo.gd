@@ -46,7 +46,7 @@ func _foto(nome: String) -> void:
 
 func _physics_process(delta: float) -> void:
 	_t_total += delta
-	if _t_total > 300.0:
+	if _t_total > 900.0:
 		print("robô: tempo esgotado")
 		get_tree().quit(1)
 		return
@@ -62,8 +62,8 @@ func _physics_process(delta: float) -> void:
 			elif _t_total - _fim_t > 1.0 and not _acabou:
 				_acabou = true
 				await _foto(main.estado)
-				print("robô: terminou em %s, salas limpas %d, recorde %d" % [main.estado,
-					main.partida.salas_limpas.size(), main.partida.recorde])
+				print("robô: terminou em %s com %s no andar %d, pontos %d, recorde %d" % [main.estado,
+					main.partida.personagem, main.partida.andar_atual, main.partida.pontos(), main.partida.recorde])
 				get_tree().quit(0)
 		"jogando":
 			Input.action_release("confirmar")
@@ -110,12 +110,17 @@ func _jogar(delta: float) -> void:
 		var d: Vector2 = alvo.position - j.position
 		Input.action_press(_eixo(d, "atirar"))
 		var dist := d.length()
-		if absf(d.x) > 3.0 and absf(d.y) > 3.0:   # alinha no eixo menor pra acertar
+		if main.partida.personagem == "espadachim":   # corpo a corpo: encosta e golpeia
+			if dist > 16.0:
+				destino = alvo.position - d.normalized() * 14.0
+		elif absf(d.x) > 3.0 and absf(d.y) > 3.0:   # alinha no eixo menor pra acertar
 			destino = j.position + (Vector2(0, d.y) if absf(d.y) < absf(d.x) else Vector2(d.x, 0))
 		elif dist < 40.0:
 			destino = j.position - d
 		elif dist > 90.0:
 			destino = alvo.position
+	elif sala.tem_alcapao():
+		destino = Vector2(160, 88)
 	elif not sala.objeto_usado() and sala.tipo in [GeradorAndar.TESOURO, GeradorAndar.FONTE] \
 			and (sala.tipo == GeradorAndar.TESOURO or main.partida.vida < main.partida.vida_max):
 		destino = Vector2(160, 92)

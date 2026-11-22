@@ -3,8 +3,9 @@
 Roguelike de masmorra em **Godot 4.7**. É a versão expandida da
 [Cripta de Bolso](https://github.com/TiagoKoakoski/gb-cripta) de Game Boy.
 
-Cada andar é gerado na hora, como no The Binding of Isaac. A cada porta você escolhe o caminho,
-como no Slay the Spire. Morreu, recomeça num andar novo; o recorde fica salvo.
+Desça os **3 andares** (Cripta, Catacumbas e Abismo) e vença o chefe de cada um. Cada andar é gerado
+na hora, como no The Binding of Isaac, e a cada porta você escolhe o caminho, como no Slay the Spire.
+Morreu, volta ao título e recomeça do andar 1; o recorde fica salvo por personagem.
 
 ## Como jogar
 
@@ -14,10 +15,18 @@ como no Slay the Spire. Morreu, recomeça num andar novo; o recorde fica salvo.
 |---|---|---|
 | Andar (8 direções) | WASD | analógico esquerdo / direcional |
 | Atirar (4 direções, segurar = rajada) | setas | analógico direito / Y A X B |
-| Começar / recomeçar | Enter, espaço ou qualquer seta | qualquer botão |
+| Escolher personagem (título) | ← → ou A D | analógico / direcional |
+| Começar | Enter, espaço, ↑ ou ↓ | qualquer botão |
 
-- **Vida:** 3 corações (até 8). Levou dano, fica ~1 s piscando e invencível.
-- **Andar:** de 9 a 12 salas, com 2 tesouros.
+- **Personagens** (escolhidos no título):
+  - **Atirador:** 3 corações, atira à distância.
+  - **Espadachim:** 4 corações, mais rápido, golpe em arco que também **destrói tiros inimigos**.
+    Os itens de tiro viram versões para a lâmina (ricochete devolve o tiro, explosivo explode quem
+    morre no golpe, teleguiado lança uma lâmina a cada 3 golpes...). O anúncio do item diz o efeito.
+- **Vida:** até 8 corações. Levou dano, fica ~1 s piscando e invencível.
+- **Andares:** 1 Cripta (9–12 salas), 2 Catacumbas (10–13), 3 Abismo (11–14), cada um com seus
+  inimigos, 2 tesouros e 1 fonte. Os inimigos ficam mais numerosos e com mais vida a cada andar.
+  Depois do chefe aparece um **alçapão**: pise nele para descer (+2 de vida, itens mantidos).
   - **Portas:** trancam enquanto houver inimigo. Cada porta mostra o que vem do outro lado:
     **caveira** (combate), **baú** (tesouro), **coração** (fonte), **coroa** (chefe).
   - **Minimapa:** no canto.
@@ -31,7 +40,13 @@ como no Slay the Spire. Morreu, recomeça num andar novo; o recorde fica salvo.
   - **Olho:** parado; atira em cruz e depois em X.
   - **Mago:** some, reaparece longe de você e atira 3 tiros em leque.
   - Todo inimigo leva meio segundo para surgir (pisca e não fere). Quanto mais longe do início, mais e mais fortes.
-  - **Rei Esqueleto:** o chefe tem 30 de vida. Ele persegue você e solta rajadas em cruz, e em 8 direções quando ferido.
+- **Chefes** (um sorteado entre 2 por andar; barra de vida no topo; 3 fases; todo ataque forte é avisado):
+  - **Cripta:** **Rei Esqueleto** (rajadas, depois espiral e esqueletos) ou **Slime Mãe** (salta, a
+    sombra mostra onde cai; solta slimes e fica menor).
+  - **Catacumbas:** **Aranha Rainha** (teias que viram poças que deixam você lento, aranhas,
+    investidas) ou **Colosso de Ossos** (mira e investe até a parede; tonto, leva dano em dobro).
+  - **Abismo:** **Olho do Abismo** (espirais; olhinhos que o protegem; feixe giratório) ou **Lich**
+    (teleporta, cópias falsas, chuva de tiros com uma brecha).
 - **Itens** (um por tesouro, sem repetir; os de tiro combinam entre si):
   - Espada: dano +1.
   - Raio: atira mais rápido.
@@ -47,13 +62,15 @@ como no Slay the Spire. Morreu, recomeça num andar novo; o recorde fica salvo.
   - Retaguarda: atira também para trás.
 - **Coração no chão:** algumas salas soltam um coração ao serem limpas (cura 1; fica no chão se a vida estiver cheia).
 - **Fonte:** cura 2, uma vez.
-- **Recorde:** salas limpas, +100 se vencer. Salvo em `user://recorde.cfg`.
+- **Recorde:** 100 por andar concluído + salas limpas, por personagem, em `user://progresso.cfg`.
 
 ## Desenvolvimento
 
 ```bash
 tests/rodar.sh                                         # todos os testes headless
-godot --path . -- --autoplay --capturas=build/fotos --forte   # robô joga e fotografa
+godot --path . -- --autoplay --capturas=build/fotos --forte   # robô joga os 3 andares e fotografa
+#   opções: --personagem=espadachim  --chefe=lich (força o chefe de todo andar)
+godot --path . --script res://ferramentas/fotos_chefes.gd      # foto de cada chefe em build/chefes
 V=~/Projetos/jogos/_ferramentas/venv/bin/python
 $V ferramentas/gerar_arte.py && $V ferramentas/gerar_sons.py  # regenera arte e sons
 ```
