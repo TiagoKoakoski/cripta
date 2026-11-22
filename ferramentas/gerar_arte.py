@@ -126,10 +126,25 @@ CORES_SALA = {"0": "#2b2433", "1": "#3b3245", "2": "#5a4a6a", "3": "#1a1520"}
 import random
 
 
-def chao(semente):
-    """Laje de pedra 16x16: rejunte escuro em cima/à esquerda, pontos claros e escuros."""
+TEMAS = {
+    "cripta": {"chao": ("#3a3044", "#241d2b", "#4a3f55", "#30283a"),
+               "parede": ("#1f1926", "#4d4060", "#65577a", "#3a3049"),
+               "pilar": ("#140f19", "#7a6a90", "#9585aa", "#4a3d5c", "#382d47"), "brilho": None},
+    "catacumbas": {"chao": ("#3d3226", "#251d15", "#4f4232", "#33291f"),
+                   "parede": ("#21180f", "#6a5440", "#85694f", "#4f3d2d"),
+                   "pilar": ("#150f09", "#9a8468", "#b39b7c", "#5e4a36", "#47382a"), "brilho": "#d8c8a8"},
+    "abismo": {"chao": ("#1f2a33", "#121a20", "#2b3a46", "#18222a"),
+               "parede": ("#0e151a", "#2f4250", "#3f5a6c", "#22313c"),
+               "pilar": ("#0a1014", "#4a7a8c", "#6aa8b8", "#2a4654", "#1f3540"), "brilho": "#7fe8ff"},
+}
+
+
+def chao(semente, tema="cripta"):
+    """Laje de pedra 16x16: rejunte escuro em cima/à esquerda, pontos claros e escuros.
+    Catacumbas ganham lascas de osso; abismo, pontos de cristal."""
     r = random.Random(semente)
-    base, rej, claro, escuro = rgba("#3a3044"), rgba("#241d2b"), rgba("#4a3f55"), rgba("#30283a")
+    base, rej, claro, escuro = (rgba(c) for c in TEMAS[tema]["chao"])
+    extra = TEMAS[tema]["brilho"]
     im = Image.new("RGBA", (16, 16), base)
     for y in range(16):
         for x in range(16):
@@ -144,12 +159,16 @@ def chao(semente):
         for _ in range(5):
             im.putpixel((x, y), rej)
             x, y = x + r.choice([0, 1]), y + 1
+    if extra and semente % 3 == 2:
+        x, y = r.randint(3, 11), r.randint(3, 11)
+        for dx, dy in ((0, 0), (1, 0), (2, 1)) if tema == "catacumbas" else ((0, 0), (0, 1), (1, 1)):
+            im.putpixel((x + dx, y + dy), rgba(extra))
     return im
 
 
-def parede():
+def parede(tema="cripta"):
     """Tijolos com rejunte, brilho em cima de cada tijolo e base em sombra."""
-    rej, tij, luz, somb = rgba("#1f1926"), rgba("#4d4060"), rgba("#65577a"), rgba("#3a3049")
+    rej, tij, luz, somb = (rgba(c) for c in TEMAS[tema]["parede"])
     im = Image.new("RGBA", (16, 16), tij)
     for y in range(16):
         linha = y // 4
@@ -169,10 +188,9 @@ def parede():
     return im
 
 
-def pilar():
+def pilar(tema="cripta"):
     """Bloco em perspectiva: topo claro (6 px) e frente escura com tijolos."""
-    cont, topo, topo_b, frente, frente_e = (rgba("#140f19"), rgba("#7a6a90"), rgba("#9585aa"),
-                                            rgba("#4a3d5c"), rgba("#382d47"))
+    cont, topo, topo_b, frente, frente_e = (rgba(c) for c in TEMAS[tema]["pilar"])
     im = Image.new("RGBA", (16, 16), frente)
     for y in range(16):
         for x in range(16):
@@ -310,6 +328,20 @@ def main():
     salvar(chao(5), "chao3")
     salvar(parede(), "parede")
     salvar(pilar(), "pilar")
+    for tema in TEMAS:
+        salvar(chao(1, tema), f"chao_{tema}")
+        salvar(chao(2, tema), f"chao2_{tema}")
+        salvar(chao(5, tema), f"chao3_{tema}")
+        salvar(parede(tema), f"parede_{tema}")
+        salvar(pilar(tema), f"pilar_{tema}")
+    salvar(pintar([N.SLIME_MAE, N.SLIME_MAE_2], ("#c8ffb0", "#2f8a3d")), "slime_mae")
+    salvar(pintar([N.ARANHA_RAINHA, N.ARANHA_RAINHA_2], ("#ffd070", "#6a2a6a")), "aranha_rainha")
+    salvar(pintar([N.COLOSSO, N.COLOSSO_2], ("#f0e6cc", "#8a7a5a")), "colosso")
+    salvar(pintar([N.OLHO, N.OLHO_2], ("#d0f6ff", "#2a6a9a")), "olho_abismo")
+    salvar(pintar([N.LICH, N.LICH_2], ("#e0c8ff", "#4a2a7a")), "lich")
+    salvar(pintar([N.TEIA], ("#ffffff", "#c8c8d8")), "poca_teia")
+    salvar(pintar([h.HEROI_BAIXO, h.HEROI_BAIXO_2, h.HEROI_DIR, h.HEROI_DIR_2, h.HEROI_CIMA, h.HEROI_CIMA_2,
+                   h.espelhar(h.HEROI_DIR), h.espelhar(h.HEROI_DIR_2)], ("#ffd8c8", "#c0392b")), "espadachim")
     salvar(sombra(), "sombra")
     salvar(alcapao(), "alcapao")
     salvar(brilho_tocha(), "brilho")

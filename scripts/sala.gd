@@ -43,6 +43,7 @@ var _tem_coracao := false   # esta sala solta (ou guarda) um coração quando li
 var _coracao: Area2D
 var _alcapao: Area2D
 var _mult_vida := 1.0
+var _tema := "cripta"
 var _inimigos: Array = []  # registrados na criação (podem entrar na árvore um quadro depois)
 
 
@@ -94,6 +95,7 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 	var entrada: Vector2i = cfg.get("entrada", Vector2i.ZERO)
 	_layout = layout
 	_mult_vida = cfg.get("mult_vida", 1.0)
+	_tema = cfg.get("tema", "cripta")
 	_montar_chao_e_paredes(cfg.get("portas", {}), layout)
 	jogador = Jogador.criar(partida, self, ponto_de_entrada(entrada))
 	jogador.morreu.connect(func() -> void: jogador_morreu.emit())
@@ -364,9 +366,10 @@ func objeto_usado() -> bool:
 # ------------------------------------------------------------------ montagem
 
 func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
-	var chao := [load("res://arte/chao.png"), load("res://arte/chao2.png"), load("res://arte/chao3.png")]
-	var parede: Texture2D = load("res://arte/parede.png")
-	var pilar: Texture2D = load("res://arte/pilar.png")
+	var tm := _tema
+	var chao := [load("res://arte/chao_%s.png" % tm), load("res://arte/chao2_%s.png" % tm), load("res://arte/chao3_%s.png" % tm)]
+	var parede: Texture2D = load("res://arte/parede_%s.png" % tm)
+	var pilar: Texture2D = load("res://arte/pilar_%s.png" % tm)
 	var vaos := {}
 	for d: Vector2i in portas:
 		for t: Vector2i in _tiles_porta(d):

@@ -12,6 +12,7 @@ var _no_ar := false
 
 func _preparar() -> void:
 	_t = 0.4
+	_ajustar_escala(3.0)
 
 
 func aviso_ativo() -> bool:
