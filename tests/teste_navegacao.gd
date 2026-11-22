@@ -14,7 +14,8 @@ func _rodar() -> void:
 	for t: String in ["teste_porta_muda_sala", "teste_sala_limpa_continua_limpa", "teste_item_uma_vez",
 			"teste_fonte_uma_vez", "teste_chefe_morto_vence", "teste_morte_derrota", "teste_hud",
 			"teste_minimapa_revela",
-			"teste_chefe_longe_da_entrada", "teste_minimapa_dentro_do_canto"]:
+			"teste_chefe_longe_da_entrada", "teste_minimapa_dentro_do_canto", "teste_dois_tesouros_diferentes",
+			"teste_coracao_persiste", "teste_coracao_sorteado"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -219,3 +220,45 @@ func teste_minimapa_dentro_do_canto() -> void:
 					return
 		await fim(a)
 	checa(true, "minimapa sempre no canto superior direito")
+
+
+func teste_dois_tesouros_diferentes() -> void:
+	var ok := true
+	for s in 20:
+		var a := novo_andar(s)
+		var itens := []
+		for p: Vector2i in a.mapa["salas"]:
+			if a.mapa["salas"][p] == GeradorAndar.TESOURO:
+				itens.append(a._cfg[p]["item"])
+		ok = ok and itens.size() == 2 and itens[0] != itens[1]
+		await fim(a)
+	checa(ok, "2 tesouros por andar, com itens diferentes")
+
+
+func teste_coracao_persiste() -> void:
+	var a := novo_andar()
+	var c := sala_do_tipo(a, GeradorAndar.COMBATE)
+	a._cfg[c]["coracao"] = true
+	a.partida.limpar_sala(c)
+	a.entrar(c, Vector2i.DOWN)
+	await frames(3)
+	checa(a.sala.coracao_no_chao(), "sala limpa com coração ainda guardado mostra o coração")
+	a.partida.vida = 2
+	a.sala.jogador.position = Vector2(160, 88)
+	await frames(4)
+	checa(a.partida.vida == 3 and not a._cfg[c]["coracao"], "pegou o coração: cura 1 e não volta")
+	await fim(a)
+
+
+func teste_coracao_sorteado() -> void:
+	var com := 0
+	var total := 0
+	for s in 30:
+		var a := novo_andar(s)
+		for p: Vector2i in a.mapa["salas"]:
+			if a.mapa["salas"][p] == GeradorAndar.COMBATE:
+				total += 1
+				com += 1 if a._cfg[p]["coracao"] else 0
+		await fim(a)
+	var taxa := float(com) / total
+	checa(taxa > 0.2 and taxa < 0.4, "cerca de 30%% das salas de combate soltam coração (%.2f)" % taxa)

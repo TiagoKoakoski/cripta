@@ -73,10 +73,10 @@ func curar(n: int) -> void:
 	vida = mini(vida_max, vida + n)
 
 
-func sortear_item() -> String:
+func sortear_item(excluir: Array = []) -> String:
 	var livres: Array[String] = []
 	for it in ITENS:
-		if not it in itens_pegos:
+		if not it in itens_pegos and not it in excluir:
 			livres.append(it)
 	if livres.is_empty():
 		return "coracao_extra"

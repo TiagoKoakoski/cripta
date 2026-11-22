@@ -39,10 +39,10 @@ func distancias(andar: Dictionary) -> Dictionary:
 func teste_quantidade() -> bool:
 	for s in 200:
 		var n: int = GeradorAndar.gerar(s)["salas"].size()
-		if n < 8 or n > 11:
+		if n < 9 or n > 12:
 			checa(false, "semente %d gerou %d salas" % [s, n])
 			return true
-	checa(true, "8 a 11 salas")
+	checa(true, "9 a 12 salas")
 	return true
 
 
@@ -64,7 +64,7 @@ func teste_especiais() -> bool:
 		for p: Vector2i in salas:
 			conta[salas[p]] = conta.get(salas[p], 0) + 1
 		var ok: bool = conta.get(GeradorAndar.INICIO, 0) == 1 and conta.get(GeradorAndar.CHEFE, 0) == 1 \
-			and conta.get(GeradorAndar.TESOURO, 0) == 1 and conta.get(GeradorAndar.FONTE, 0) == 1
+			and conta.get(GeradorAndar.TESOURO, 0) == 2 and conta.get(GeradorAndar.FONTE, 0) == 1
 		var dist := distancias(a)
 		var max_d := 0
 		for p: Vector2i in dist:
@@ -76,7 +76,7 @@ func teste_especiais() -> bool:
 		if not ok:
 			checa(false, "semente %d: especiais errados %s" % [s, conta])
 			return true
-	checa(true, "1 início, 1 tesouro, 1 fonte, 1 chefe (o mais distante), especiais em becos")
+	checa(true, "1 início, 2 tesouros, 1 fonte, 1 chefe (o mais distante), especiais em becos")
 	return true
 
 

@@ -33,7 +33,7 @@ static func gerar(semente: int) -> Dictionary:
 
 
 static func _tentar(rng: RandomNumberGenerator) -> Dictionary:
-	var alvo := rng.randi_range(8, 11)
+	var alvo := rng.randi_range(9, 12)
 	var salas := {Vector2i.ZERO: COMBATE}
 	var ordem: Array[Vector2i] = [Vector2i.ZERO]
 	var tentativas := 0
@@ -53,7 +53,7 @@ static func _tentar(rng: RandomNumberGenerator) -> Dictionary:
 	for p: Vector2i in ordem:
 		if p != Vector2i.ZERO and vizinhos(salas, p).size() == 1:
 			becos.append(p)
-	if becos.size() < 3:
+	if becos.size() < 4:
 		return {}
 	var dist := _distancias(salas, Vector2i.ZERO)
 	var chefe: Vector2i = becos[0]
@@ -68,10 +68,14 @@ static func _tentar(rng: RandomNumberGenerator) -> Dictionary:
 	var i_tesouro := rng.randi_range(0, becos.size() - 1)
 	var tesouro: Vector2i = becos[i_tesouro]
 	becos.remove_at(i_tesouro)
+	var i_tesouro2 := rng.randi_range(0, becos.size() - 1)
+	var tesouro2: Vector2i = becos[i_tesouro2]
+	becos.remove_at(i_tesouro2)
 	var fonte: Vector2i = becos[rng.randi_range(0, becos.size() - 1)]
 	salas[Vector2i.ZERO] = INICIO
 	salas[chefe] = CHEFE
 	salas[tesouro] = TESOURO
+	salas[tesouro2] = TESOURO
 	salas[fonte] = FONTE
 	return {"salas": salas, "inicio": Vector2i.ZERO, "chefe": chefe}
 

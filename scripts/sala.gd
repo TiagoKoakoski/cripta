@@ -8,6 +8,7 @@ signal saiu(direcao: Vector2i)
 signal item_pego(item: String)
 signal jogador_morreu
 signal chefe_morto
+signal coracao_pego
 
 const T := 16
 const COLS := 20
@@ -37,6 +38,8 @@ var _item := ""
 var _fonte_usada := false
 var _rng := RandomNumberGenerator.new()
 var _layout := -1
+var _tem_coracao := false   # esta sala solta (ou guarda) um coração quando limpa
+var _coracao: Area2D
 var _inimigos: Array = []  # registrados na criação (podem entrar na árvore um quadro depois)
 
 
@@ -82,6 +85,7 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 	_montar_chao_e_paredes(cfg.get("portas", {}), layout)
 	jogador = Jogador.criar(partida, self, ponto_de_entrada(entrada))
 	jogador.morreu.connect(func() -> void: jogador_morreu.emit())
+	jogador.ferido.connect(tremer)
 	add_child(jogador)
 	var limpa_antes: bool = cfg.get("limpa", false)
 	if tipo == GeradorAndar.TESOURO and not limpa_antes:
@@ -103,8 +107,11 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 			else:
 				_criar_inimigo(e, livres[i % livres.size()])
 			i += 1
+	_tem_coracao = cfg.get("coracao", false)
 	_trancada = vivos() > 0
 	_atualizar_portas()
+	if _tem_coracao and not _trancada:
+		_soltar_coracao()
 
 
 ## pontos de chão sem pilar (o mago teletransporta para um deles)
@@ -169,6 +176,8 @@ func _verificar_limpa() -> void:
 		_atualizar_portas()
 		Sons.tocar("porta")
 		limpa.emit()
+		if _tem_coracao:
+			_soltar_coracao.call_deferred()
 
 
 func _criar_objeto(sprite: String, sobre: String) -> void:
@@ -213,6 +222,57 @@ func _tocou_objeto(corpo: Node) -> void:
 		Sons.tocar("fonte")
 		(_objeto.get_child(0) as Sprite2D).modulate = Color(0.5, 0.5, 0.6)
 		item_pego.emit("fonte")
+
+
+var _tremor: Tween
+
+
+func tremer() -> void:
+	if _tremor:
+		_tremor.kill()
+	_tremor = create_tween()
+	for i in 5:
+		_tremor.tween_property(self, "position", Vector2(_rng.randf_range(-3, 3), _rng.randf_range(-3, 3)), 0.035)
+	_tremor.tween_property(self, "position", Vector2.ZERO, 0.035)
+
+
+func coracao_no_chao() -> bool:
+	return _coracao != null and is_instance_valid(_coracao) and not _coracao.is_queued_for_deletion()
+
+
+func _soltar_coracao() -> void:
+	if coracao_no_chao():
+		return
+	_coracao = Area2D.new()
+	_coracao.position = Vector2(160, 88)
+	_coracao.collision_layer = 0
+	_coracao.collision_mask = Camadas.JOGADOR
+	var s := Sprite2D.new()
+	s.texture = load("res://arte/coracao_chao.png")
+	_coracao.add_child(s)
+	var c := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(12, 12)
+	c.shape = r
+	_coracao.add_child(c)
+	add_child(_coracao)
+	var tw := _coracao.create_tween().set_loops()
+	tw.tween_property(s, "position:y", -2.0, 0.4)
+	tw.tween_property(s, "position:y", 0.0, 0.4)
+
+
+func _physics_process(_delta: float) -> void:
+	# o coração fica no chão enquanto a vida estiver cheia; pega quando houver espaço
+	if coracao_no_chao() and partida.vida < partida.vida_max:
+		for corpo: Node in _coracao.get_overlapping_bodies():
+			if corpo is Jogador:
+				partida.curar(1)
+				Sons.tocar("fonte")
+				Efeitos.faisca(self, _coracao.position, Color(1, 0.5, 0.6))
+				_coracao.queue_free()
+				_tem_coracao = false
+				coracao_pego.emit()
+				break
 
 
 func objeto_usado() -> bool:

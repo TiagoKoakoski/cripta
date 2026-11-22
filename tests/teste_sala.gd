@@ -16,7 +16,7 @@ func _rodar() -> void:
 			"teste_invencibilidade", "teste_slime_divide_e_sala_abre", "teste_spawn_longe_da_porta",
 			"teste_parede_segura", "teste_quatro_morcegos_limpam", "teste_porta_trancada",
 			"teste_montar_durante_fisica_tranca",
-			"teste_inimigo_morto_nao_fere"]:
+			"teste_inimigo_morto_nao_fere", "teste_coracao_ao_limpar", "teste_coracao_vida_cheia", "teste_tremor"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -203,4 +203,52 @@ func teste_inimigo_morto_nao_fere() -> void:
 	m.levar_tiro(99)   # morre colado no jogador; o corpo só sai da árvore no fim do quadro
 	await frames(1)
 	checa(sala.partida.vida == 6, "inimigo que acabou de morrer não fere (vida %d)" % sala.partida.vida)
+	await desmontar(sala)
+
+
+func sala_com_coracao(vida: int) -> Sala:
+	var partida := Partida.new()
+	partida.arquivo_recorde = "user://teste_recorde.cfg"
+	partida.comecar(1)
+	partida.vida = vida
+	var sala := Sala.new()
+	root.add_child(sala)
+	sala.configurar({"tipo": GeradorAndar.COMBATE, "portas": {}, "layout": 0, "coracao": true,
+		"inimigos": [{"tipo": "esqueleto", "pos": Vector2(60, 40)}], "limpa": false, "entrada": Vector2i.DOWN}, partida)
+	return sala
+
+
+func teste_coracao_ao_limpar() -> void:
+	var sala := sala_com_coracao(2)
+	var pegou := [false]
+	sala.coracao_pego.connect(func() -> void: pegou[0] = true)
+	checa(not sala.coracao_no_chao(), "coração só aparece depois de limpar")
+	sala.inimigo_mais_perto().levar_tiro(99)
+	await frames(3)
+	checa(sala.coracao_no_chao(), "sala limpa solta o coração")
+	sala.jogador.position = Vector2(160, 88)
+	await frames(4)
+	checa(sala.partida.vida == 3 and pegou[0] and not sala.coracao_no_chao(), "coração cura 1 e some")
+	await desmontar(sala)
+
+
+func teste_coracao_vida_cheia() -> void:
+	var sala := sala_com_coracao(3)
+	sala.inimigo_mais_perto().levar_tiro(99)
+	await frames(3)
+	sala.jogador.position = Vector2(160, 88)
+	await frames(4)
+	checa(sala.coracao_no_chao(), "com vida cheia o coração fica no chão")
+	await desmontar(sala)
+
+
+func teste_tremor() -> void:
+	var sala := montar([], 5)
+	sala.jogador.ferir()
+	var mexeu := false
+	for i in 6:
+		await physics_frame
+		mexeu = mexeu or sala.position != Vector2.ZERO
+	await frames(30)
+	checa(mexeu and sala.position == Vector2.ZERO, "levar dano treme a tela e ela volta ao lugar")
 	await desmontar(sala)

@@ -21,15 +21,18 @@ func iniciar(p: Partida, semente: int) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = semente * 31 + 7
 	var dist := GeradorAndar._distancias(mapa["salas"], mapa["inicio"])
+	var sorteados := []
 	for pos: Vector2i in mapa["salas"]:
 		var tipo: int = mapa["salas"][pos]
 		var portas := {}
 		for v: Vector2i in GeradorAndar.vizinhos(mapa["salas"], pos):
 			portas[v - pos] = mapa["salas"][v]
 		var cfg := {"tipo": tipo, "portas": portas, "layout": rng.randi_range(0, 3), "semente": rng.randi(),
-			"inimigos": _sortear_inimigos(rng, dist[pos]) if tipo == GeradorAndar.COMBATE else []}
+			"inimigos": _sortear_inimigos(rng, dist[pos]) if tipo == GeradorAndar.COMBATE else [],
+			"coracao": tipo == GeradorAndar.COMBATE and rng.randf() < 0.3}
 		if tipo == GeradorAndar.TESOURO:
-			cfg["item"] = partida.sortear_item()
+			cfg["item"] = partida.sortear_item(sorteados)
+			sorteados.append(cfg["item"])
 		_cfg[pos] = cfg
 	hud = Hud.new(partida, self)
 	add_child(hud)
@@ -72,6 +75,7 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 	sala.saiu.connect(func(d: Vector2i) -> void: _mudar.call_deferred(pos + d, -d))
 	sala.limpa.connect(func() -> void: partida.limpar_sala(pos))
 	sala.item_pego.connect(func(_i: String) -> void: partida.limpar_sala(pos))
+	sala.coracao_pego.connect(func() -> void: _cfg[pos]["coracao"] = false)
 	sala.jogador_morreu.connect(func() -> void: derrota.emit())
 	sala.chefe_morto.connect(func() -> void:
 		partida.limpar_sala(pos)
