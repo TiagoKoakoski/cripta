@@ -8,7 +8,7 @@ extends CharacterBody2D
 signal morreu(inimigo: Inimigo, tipo: String, pos: Vector2)
 
 const VIDA := {"morcego": 2, "slime": 3, "slime_pequeno": 1, "esqueleto": 3, "rei": 30,
-	"aranha": 2, "fantasma": 3, "olho": 4, "mago": 4, "olhinho": 3, "lich_copia": 1}
+	"aranha": 2, "fantasma": 3, "olho": 4, "mago": 4, "olhinho": 3, "lich_copia": 1, "sombra_menor": 8}
 const SURGIMENTO := 0.5
 const VOADORES := ["morcego", "fantasma", "olhinho"]   # passam por cima dos pilares
 const COR_MORTE := {"morcego": Color(0.6, 0.4, 0.8), "slime": Color(0.4, 0.8, 0.4),
@@ -17,7 +17,7 @@ const COR_MORTE := {"morcego": Color(0.6, 0.4, 0.8), "slime": Color(0.4, 0.8, 0.
 	"mago": Color(0.5, 1, 0.8)}
 const SPRITE := {"morcego": "morcego", "slime": "slime", "slime_pequeno": "slime_pequeno",
 	"esqueleto": "esqueleto", "rei": "rei", "aranha": "aranha", "fantasma": "fantasma", "olho": "olho",
-	"mago": "mago", "olhinho": "olho", "lich_copia": "lich"}
+	"mago": "mago", "olhinho": "olho", "lich_copia": "lich", "sombra_menor": "sombra_gemea"}
 
 var tipo := "morcego"
 var hp := 1
@@ -183,6 +183,8 @@ func _ia(_delta: float) -> void:
 			_mago()
 		"olhinho":
 			velocity = Vector2.ZERO   # quem move é o Olho do Abismo
+		"sombra_menor":
+			_sombra_menor()
 
 
 func _para_jogador() -> Vector2:
@@ -284,3 +286,14 @@ func _ponto_de_teleporte() -> Vector2:
 				longe = p
 		return longe
 	return bons[_rng.randi_range(0, bons.size() - 1)]
+
+
+## sombra menor (fase 2 da Sombra Gêmea): espelha o jogador só na horizontal e atira a cada 1,6 s
+func _sombra_menor() -> void:
+	var alvo := Vector2(320.0 - jogador.position.x, jogador.position.y)
+	velocity = (alvo - position).limit_length(1.0) * 80.0 if position.distance_to(alvo) > 3.0 else Vector2.ZERO
+	_sprite.modulate.a = 0.75
+	if _t <= 0.0:
+		_t = 1.6
+		var d := _para_jogador()
+		sala.add_child(Tiro.criar(position + d * 9.0, d, false, 1, 90.0, 3.0))

@@ -110,3 +110,25 @@ TEIA = [
 import sprites_base as _B  # noqa: E402
 SLIME_MAE = com_coroa(_B.SLIME, (2, 3, 4))
 SLIME_MAE_2 = com_coroa(_B.SLIME_2, (4, 5, 6))
+
+CAVALEIRO = [
+    "................", "......kwk.......", ".....kwgwk......", "......kgk.......",
+    "...kkkkkkkkk....", "..kwwwggggwwk...", ".kwwkggggggkwwk.", ".kwk.kggggk.kwk.",
+    ".kwk.kgwwgk.kwk.", ".kkk.kggggk.kkk.", "....kkggggkk....", "....kggkkggk....",
+    "....kgk..kgk....", "...kkgk..kgkk...", "...kkkk..kkkk...", "................",
+]
+CAVALEIRO_2 = [CAVALEIRO[0], ".......kwk......", "......kwgwk....."] + CAVALEIRO[3:]
+VERME = [
+    "................", "......kkkk......", "....kkwwwwkk....", "...kwwkwwkwwk...",
+    "..kwwwwwwwwwwk..", "..kwkwkwkwkwwk..", "..kkkkkkkkkkkk..", "...kggggggggk...",
+    "...kwgggggwgk...", "....kggggggk....", "....kgwgggwk....", "...kkggggggkk...",
+    "..kgggwggwgggk..", ".kggggggggggggk.", "kkkkkkkkkkkkkkkk", "................",
+]
+VERME_2 = VERME[:5] + ["..kwwwwwwwwwwk.."] + VERME[6:]
+FOGO = [
+    "................", "................", "................", "................",
+    "................", "................", ".......k........", "......kwk.......",
+    ".....kwwgk......", "....kwggwgk.....", "....kgwwggk.....", "...kgggwwggk....",
+    "...kggggggggk...", "....kkkkkkkk....", "................", "................",
+]
+FOGO_2 = FOGO[:6] + ["........k.......", ".......kwk......", "......kwgwk....."] + FOGO[9:]

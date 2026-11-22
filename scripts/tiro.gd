@@ -17,7 +17,8 @@ var perfura := false
 var guiado := false
 var explode := false
 var gelo := false
-var vira_poca := false   # teia da Aranha Rainha: ao acabar vira PocaTeia
+var vira_poca := false
+var guiado_jogador: Node2D   # tiro inimigo que persegue o jogador (cabeça do Cavaleiro)   # teia da Aranha Rainha: ao acabar vira PocaTeia
 var _acertados := {}
 var _imune_parede := 0.0
 var _ultimo_quique: Node
@@ -75,6 +76,9 @@ func _physics_process(delta: float) -> void:
 			var desejada := (alvo.global_position - global_position).normalized()
 			var ang := direcao.angle_to(desejada)
 			direcao = direcao.rotated(clampf(ang, -GIRO_GUIADO * delta, GIRO_GUIADO * delta))
+	if guiado_jogador != null and is_instance_valid(guiado_jogador):
+		var quer := (guiado_jogador.global_position - global_position).normalized()
+		direcao = direcao.rotated(clampf(direcao.angle_to(quer), -2.6 * delta, 2.6 * delta))
 	position += direcao * velocidade * delta
 	rotation = direcao.angle()
 	_imune_parede = maxf(0.0, _imune_parede - delta)

@@ -4,6 +4,7 @@ extends CharacterBody2D
 
 signal ferido
 signal morreu
+signal atacou(dir: Vector2)
 
 var partida: Partida
 var sala: Node2D
@@ -86,6 +87,7 @@ static func _cardinal(v: Vector2) -> Vector2:
 func _atirar(dir: Vector2) -> void:
 	_recarga = partida.cadencia
 	arma.atacar(self, dir)
+	atacou.emit(dir)
 
 
 func ferir() -> void:

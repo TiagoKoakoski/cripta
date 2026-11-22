@@ -403,6 +403,10 @@ def main():
     salvar(pintar([N.OLHO, N.OLHO_2], ("#d0f6ff", "#2a6a9a")), "olho_abismo")
     salvar(pintar([N.LICH, N.LICH_2], ("#e0c8ff", "#4a2a7a")), "lich")
     salvar(pintar([N.TEIA], ("#ffffff", "#c8c8d8")), "poca_teia")
+    salvar(pintar([N.CAVALEIRO, N.CAVALEIRO_2], ("#ffb060", "#5a6a8a")), "cavaleiro")
+    salvar(pintar([N.VERME, N.VERME_2], ("#f0e6cc", "#8a6a4a")), "verme")
+    salvar(pintar([h.HEROI_BAIXO, h.HEROI_BAIXO_2], ("#b8a8e0", "#2a1a4a")), "sombra_gemea")
+    salvar(pintar([N.FOGO, N.FOGO_2], ("#ffe080", "#e05020")), "fogo")
     # subchefes: versões de elite dos inimigos comuns
     salvar(pintar([h.MORCEGO, h.MORCEGO_2], ("#ffd0d0", "#a02040")), "morcego_vampiro")
     salvar(pintar([h.ESQUELETO, h.ESQUELETO_2], ("#fff0c0", "#b08030")), "esqueleto_capitao")
