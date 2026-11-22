@@ -17,6 +17,7 @@ var perfura := false
 var guiado := false
 var explode := false
 var gelo := false
+var vira_poca := false   # teia da Aranha Rainha: ao acabar vira PocaTeia
 var _acertados := {}
 var _imune_parede := 0.0
 var _ultimo_quique: Node
@@ -79,7 +80,15 @@ func _physics_process(delta: float) -> void:
 	_imune_parede = maxf(0.0, _imune_parede - delta)
 	vida -= delta
 	if vida <= 0.0:
-		queue_free()
+		_acabar()
+
+
+func _acabar() -> void:
+	if is_queued_for_deletion():
+		return
+	if vira_poca:
+		PocaTeia.criar(get_parent(), position)
+	queue_free()
 
 
 func _alvo_mais_perto() -> Node2D:
@@ -107,7 +116,7 @@ func _bateu(corpo: Node) -> void:
 			_ultimo_quique = corpo
 			_quicar(corpo as StaticBody2D)
 			return
-		queue_free()
+		_acabar()
 		return
 	if do_jogador and corpo is Inimigo:
 		var e := corpo as Inimigo
@@ -123,7 +132,7 @@ func _bateu(corpo: Node) -> void:
 			return
 	elif not do_jogador and corpo is Jogador:
 		(corpo as Jogador).ferir()
-	queue_free()
+	_acabar()
 
 
 func _quicar(b: StaticBody2D) -> void:

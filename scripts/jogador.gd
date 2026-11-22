@@ -54,7 +54,7 @@ func _physics_process(delta: float) -> void:
 		return
 	partida.avancar(delta)
 	var mover := Input.get_vector("mover_esquerda", "mover_direita", "mover_cima", "mover_baixo")
-	velocity = mover * partida.velocidade
+	velocity = mover * partida.velocidade * (0.5 if partida.lentidao_jogador > 0.0 else 1.0)
 	move_and_slide()
 	var mira := _direcao_tiro()
 	if mira != Vector2.ZERO:

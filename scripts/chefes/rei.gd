@@ -8,7 +8,6 @@ var _giro := 0.0
 
 
 func _agir(delta: float) -> void:
-	_t -= delta
 	match _estado_rei:
 		"perseguir":
 			velocity = _para_jogador() * [0.0, 40.0, 50.0, 55.0][_fase]

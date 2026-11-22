@@ -23,7 +23,6 @@ func perigoso() -> bool:
 
 
 func _agir(delta: float) -> void:
-	_t -= delta
 	velocity = Vector2.ZERO
 	match _estado_s:
 		"pausa":

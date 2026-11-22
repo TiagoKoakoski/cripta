@@ -28,6 +28,7 @@ var explosivo := false
 var gelo := false
 var retaguarda := false
 var invencivel := 0.0
+var lentidao_jogador := 0.0   # segundos restantes de lentidão (teia)
 var itens_pegos: Array[String] = []
 var salas_limpas: Dictionary = {}
 var andar_atual := 1
@@ -56,6 +57,7 @@ func comecar(nova_semente: int, quem := "atirador") -> void:
 	for it: String in ITENS_DE_TIRO:
 		set(it, false)
 	invencivel = 0.0
+	lentidao_jogador = 0.0
 	itens_pegos.clear()
 	salas_limpas.clear()
 	andar_atual = 1
@@ -67,6 +69,7 @@ func comecar(nova_semente: int, quem := "atirador") -> void:
 
 func avancar(dt: float) -> void:
 	invencivel = maxf(0.0, invencivel - dt)
+	lentidao_jogador = maxf(0.0, lentidao_jogador - dt)
 
 
 ## Devolve true se o dano contou (não estava invencível nem morto).

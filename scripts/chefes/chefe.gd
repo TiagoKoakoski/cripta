@@ -1,4 +1,5 @@
 ## Base dos chefes: vida da tabela, espera inicial de 1 s, fases a 2/3 e 1/3 da vida, invocações.
+## (o contador _t já é decrementado por Inimigo._physics_process antes de _ia)
 ## Cada chefe é uma subclasse que implementa _agir(delta) e, se quiser, _ao_mudar_fase(f).
 class_name Chefe
 extends Inimigo

@@ -4,7 +4,7 @@ extends SceneTree
 
 var passou := 0
 var falhou := 0
-const PRONTOS := ["rei", "slime_mae"]
+const PRONTOS := ["rei", "slime_mae", "aranha_rainha", "colosso"]
 
 
 func _initialize() -> void:
@@ -14,7 +14,9 @@ func _initialize() -> void:
 
 func _rodar() -> void:
 	for t: String in ["teste_vida_espera_fases", "teste_barra_no_hud", "teste_rei_fase3",
-			"teste_slime_mae_salta_com_aviso", "teste_slime_mae_divide", "teste_invocados_somem_com_chefe"]:
+			"teste_slime_mae_salta_com_aviso", "teste_slime_mae_divide", "teste_invocados_somem_com_chefe",
+			"teste_rainha_teia_vira_poca", "teste_rainha_fase2_invoca", "teste_rainha_investida_avisada",
+			"teste_colosso_investe_ate_parede", "teste_colosso_tonto", "teste_colosso_fase3_duas"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -166,4 +168,123 @@ func teste_invocados_somem_com_chefe() -> void:
 	c.levar_tiro(999)
 	await frames(5)
 	checa(morto[0] and sala.vivos() == 0 and sala.aberta(), "chefe morto: invocados somem e a sala abre")
+	await desmontar(sala)
+
+
+func teste_rainha_teia_vira_poca() -> void:
+	var sala := montar("aranha_rainha")
+	var poca: Node = null
+	for i in 60 * 6:
+		await physics_frame
+		for ch: Node in sala.get_children():
+			if ch is PocaTeia:
+				poca = ch
+		if poca:
+			break
+	checa(poca != null, "teia vira poça no chão")
+	if poca:
+		sala.jogador.position = (poca as Node2D).position
+		await frames(4)
+		checa(sala.partida.lentidao_jogador > 0.0, "jogador na poça fica lento")
+		var vel0 := sala.partida.velocidade
+		Input.action_press("mover_direita")
+		await frames(2)
+		checa(sala.jogador.velocity.x < vel0 * 0.6, "lento: anda a metade (%.0f)" % sala.jogador.velocity.x)
+		Input.action_release("mover_direita")
+		var t := 0
+		while is_instance_valid(poca) and t < 60 * 6:
+			await physics_frame
+			t += 1
+		checa(t >= 60 * 3 and t <= 60 * 5, "poça dura ~4 s (%d quadros depois de achar)" % t)
+	await desmontar(sala)
+
+
+func teste_rainha_fase2_invoca() -> void:
+	var sala := montar("aranha_rainha")
+	var c := sala.chefe()
+	await frames(100)
+	ferir_ate(c, 0.6)
+	await frames(10)
+	checa(vivos_do_tipo(sala, "aranha") == 2, "Rainha fase 2: invoca 2 aranhas")
+	await desmontar(sala)
+
+
+func teste_rainha_investida_avisada() -> void:
+	var sala := montar("aranha_rainha")
+	var c := sala.chefe()
+	await frames(100)
+	ferir_ate(c, 0.3)
+	var aviso := 0.0
+	var aviso_antes := -1.0
+	for i in 60 * 8:
+		await physics_frame
+		var e: String = c.call("estado_atual")
+		if e == "investida":
+			aviso_antes = aviso
+			break
+		aviso = aviso + 1.0 / 60.0 if e == "aviso" else 0.0
+	checa(aviso_antes >= 0.48, "Rainha fase 3: investida avisada por 0,5 s (%.2f)" % aviso_antes)
+	await desmontar(sala)
+
+
+func teste_colosso_investe_ate_parede() -> void:
+	var sala := montar("colosso")
+	var c := sala.chefe()
+	var mira := 0.0
+	var mira_antes := -1.0
+	var parou_na_parede := false
+	var investindo := false
+	for i in 60 * 8:
+		await physics_frame
+		var e: String = c.call("estado_atual")
+		if e == "investir" and not investindo:
+			investindo = true
+			mira_antes = mira
+		if investindo and e != "investir":
+			var p := c.position
+			parou_na_parede = p.x <= 44.0 or p.x >= 276.0 or p.y <= 44.0 or p.y >= 132.0 or c.get_slide_collision_count() > 0 or e == "tonto"
+			break
+		mira = mira + 1.0 / 60.0 if e == "mirar" else 0.0
+	checa(mira_antes >= 0.68, "Colosso: linha de aviso por 0,7 s antes de investir (%.2f)" % mira_antes)
+	checa(parou_na_parede, "Colosso: investe até bater (%.0f, %.0f)" % [c.position.x, c.position.y])
+	await desmontar(sala)
+
+
+func teste_colosso_tonto() -> void:
+	var sala := montar("colosso")
+	var c := sala.chefe()
+	var tonto := 0
+	var hp_ok := false
+	for i in 60 * 10:
+		await physics_frame
+		if c.call("estado_atual") == "tonto":
+			if tonto == 5:
+				var h := c.hp
+				c.levar_tiro(1)
+				hp_ok = c.hp == h - 2
+			tonto += 1
+		elif tonto > 0:
+			break
+	checa(tonto >= 66 and tonto <= 78, "Colosso: tonto por 1,2 s (%d quadros)" % tonto)
+	checa(c.ultima_rajada == 5, "Colosso: leque de ossos ao bater (%d)" % c.ultima_rajada)
+	checa(hp_ok, "Colosso: leva dano em dobro quando tonto")
+	await desmontar(sala)
+
+
+func teste_colosso_fase3_duas() -> void:
+	var sala := montar("colosso")
+	var c := sala.chefe()
+	await frames(100)
+	ferir_ate(c, 0.3)
+	var investidas := 0
+	var anterior := ""
+	for i in 60 * 10:
+		await physics_frame
+		var e: String = c.call("estado_atual")
+		if e == "investir" and anterior != "investir":
+			investidas += 1
+		if e == "tonto":
+			break
+		anterior = e
+	checa(investidas == 2, "Colosso fase 3: 2 investidas antes de ficar tonto (%d)" % investidas)
 	await desmontar(sala)
