@@ -47,10 +47,10 @@ func _ready() -> void:
 	_icone.hframes = 8
 	_icone.frame = 4   # de costas, subindo
 	_fundo.add_child(_icone)
-	_titulo = _label(Vector2(104, 52), 10, Color(1, 0.85, 0.45))
-	_texto = _label(Vector2(104, 72), 8, Color(0.92, 0.88, 0.8))
+	_titulo = _label(Vector2(108, 52), 10, Color(1, 0.85, 0.45))
+	_texto = _label(Vector2(108, 72), 8, Color(0.92, 0.88, 0.8))
 	_texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_texto.size = Vector2(200, 80)
+	_texto.size = Vector2(204, 80)
 	create_tween().tween_property(_fundo, "modulate:a", 1.0, FADE)
 	_montar()
 
@@ -99,7 +99,7 @@ func _process(delta: float) -> void:
 	var p: Dictionary = paginas[_i]
 	var k := clampf((_t - 0.3) / 1.0, 0.0, 1.0)
 	var y := lerpf(_y_andar(p.get("de", 0)), _y_andar(p.get("para", 0)), k * k * (3.0 - 2.0 * k))
-	_icone.position = Vector2(60, y - 2.0)
+	_icone.position = Vector2(74, y - 2.0)
 	_icone.frame = 4 + int(_t * 6.0) % 2 if k < 1.0 else 4
 	if _t >= duracao:
 		_t = MIN
@@ -114,12 +114,12 @@ func _desenhar_torre() -> void:
 	var p: Dictionary = paginas[_i] if _i < paginas.size() else {}
 	var nomes := ["CRIPTA", "CATACUMBAS", "ABISMO"]
 	var cores := [Color(0.35, 0.28, 0.42), Color(0.45, 0.36, 0.26), Color(0.18, 0.3, 0.38)]
-	_torre.draw_rect(Rect2(36, 20, 48, 2), Color(0.5, 0.8, 1.0, 0.6))   # a fenda no céu
+	_torre.draw_rect(Rect2(50, 20, 48, 2), Color(0.5, 0.8, 1.0, 0.6))   # a fenda no céu
 	for n in 3:
 		var y := _y_andar(n + 1) - 16.0
 		var destaque: bool = n + 1 == p.get("para", 0)
-		var r := Rect2(40, y, 40, 32)
+		var r := Rect2(54, y, 40, 32)
 		_torre.draw_rect(r, cores[n].lightened(0.25) if destaque else cores[n])
 		_torre.draw_rect(r, Color(0.08, 0.05, 0.1), false, 1.0)
-		_torre.draw_string(ThemeDB.fallback_font, Vector2(4, y + 20), nomes[n], HORIZONTAL_ALIGNMENT_LEFT, 36, 6,
+		_torre.draw_string(ThemeDB.fallback_font, Vector2(2, y + 19), nomes[n], HORIZONTAL_ALIGNMENT_LEFT, 50, 6,
 			Color(1, 0.9, 0.6) if destaque else Color(0.6, 0.55, 0.65))
