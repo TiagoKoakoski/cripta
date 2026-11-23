@@ -16,6 +16,11 @@ var _tela: Node2D
 var _espera := 0.0
 var _robo: Node
 var _cartao: Cartao
+var _fundo_tela := ""
+
+
+func fundo_da_tela() -> String:
+	return _fundo_tela
 
 const ANDAR_TEXTO := {2: "A cripta ficou para trás. Acima, o ossuário das Catacumbas range sob o peso dos ossos.",
 	3: "O ar esfria. No topo da torre, o céu rasgado: o Abismo engole as últimas estrelas."}
@@ -127,9 +132,9 @@ func _abertura() -> void:
 	estado = "historia"
 	var quem := _nome_curto()
 	_cartao = Cartao.mostrar(self, [
-		{"titulo": "VALE-CINZA", "texto": "Numa noite sem estrelas, uma torre negra brotou do cemitério e rachou a velha cripta ao meio.", "de": 0, "para": 0},
-		{"titulo": "O LICH VESPER", "texto": "No alto da torre ele rasgou o céu. O Abismo engole as estrelas, uma a uma. Quando a última apagar, os mortos levantam.", "de": 0, "para": 0},
-		{"titulo": "ANDAR 1 — CRIPTA", "texto": "%s entra pela cripta. É preciso subir." % quem, "de": 0, "para": 1},
+		{"titulo": "VALE-CINZA", "texto": "Numa noite sem estrelas, uma torre negra brotou do cemitério e rachou a velha cripta ao meio.", "de": 0, "para": 0, "imagem": "cartao_abertura1"},
+		{"titulo": "O LICH VESPER", "texto": "No alto da torre ele rasgou o céu. O Abismo engole as estrelas, uma a uma. Quando a última apagar, os mortos levantam.", "de": 0, "para": 0, "imagem": "cartao_abertura2"},
+		{"titulo": "ANDAR 1 — CRIPTA", "texto": "%s entra pela cripta. É preciso subir." % quem, "de": 0, "para": 1, "imagem": "cartao_abertura3"},
 	], Partida.PERSONAGENS[selecionado], 4.0)
 	_cartao.terminou.connect(comecar)
 
@@ -167,7 +172,7 @@ func _transicao() -> void:
 	var info := Andares.info(para)
 	andar.process_mode = Node.PROCESS_MODE_DISABLED
 	_cartao = Cartao.mostrar(self, [{"titulo": "ANDAR %d — %s" % [para, info["nome"]], "texto": ANDAR_TEXTO.get(para, ""),
-		"de": para - 1, "para": para}], partida.personagem, 2.5)
+		"de": para - 1, "para": para, "imagem": "cartao_%s" % info["tema"]}], partida.personagem, 3.0)
 	_cartao.terminou.connect(func() -> void:
 		if andar == null:
 			return
@@ -192,8 +197,8 @@ func _terminar(vitoria: bool) -> void:
 	estado = "final"
 	var quem := _nome_curto()
 	_cartao = Cartao.mostrar(self, [
-		{"titulo": "A FENDA SE FECHA", "texto": "Vesper cai. Devagar, o rasgo no céu se costura, e a primeira estrela volta a brilhar.", "de": 3, "para": 3},
-		{"titulo": "AMANHECER", "texto": "As estrelas voltam a Vale-Cinza. %s desce a torre morta enquanto o sol nasce." % quem, "de": 3, "para": 0},
+		{"titulo": "A FENDA SE FECHA", "texto": "Vesper cai. Devagar, o rasgo no céu se costura, e a primeira estrela volta a brilhar.", "de": 3, "para": 3, "imagem": "cartao_final1"},
+		{"titulo": "AMANHECER", "texto": "As estrelas voltam a Vale-Cinza. %s desce a torre morta enquanto o sol nasce." % quem, "de": 3, "para": 3, "imagem": "cartao_final2"},
 	], partida.personagem, 4.0)
 	_cartao.terminou.connect(func() -> void: _mostrar_tela("vitoria"))
 
@@ -206,6 +211,18 @@ func _mostrar_tela(qual: String, com_espera := true) -> void:
 		_tela.queue_free()
 	_tela = Node2D.new()
 	add_child(_tela)
+	_fundo_tela = {"titulo": "fundo_titulo", "fim": "cartao_fim", "vitoria": "cartao_final2"}[qual]
+	if Visual.modo == Visual.DETALHADO and Visual.tem_hd(_fundo_tela):
+		var f := Sprite2D.new()
+		f.centered = false
+		f.texture = Visual._carregar(Visual.caminho_hd(_fundo_tela))
+		_tela.add_child(f)
+		var escuro := ColorRect.new()
+		escuro.color = Color(0.02, 0.01, 0.04, 0.5)
+		escuro.size = Vector2(640, 360)
+		_tela.add_child(escuro)
+	else:
+		_fundo_tela = ""
 	var titulo := {"titulo": "titulo", "fim": "texto_fim", "vitoria": "texto_vitoria"}[qual] as String
 	_imagem(titulo, Vector2(320, 80))
 	_texto("aperte um botão", Vector2(0, 318), 16, Color(0.8, 0.75, 0.68))

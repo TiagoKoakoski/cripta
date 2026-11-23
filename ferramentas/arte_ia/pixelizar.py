@@ -43,7 +43,7 @@ ALTURA_HEROI = 40
 QUADRADOS = {"pilar", "pedra", "caixa", "buraco", "espinhos"}
 TEMAS = {"cripta": (1.0, 1.0, 1.0), "catacumbas": (1.15, 0.95, 0.75), "abismo": (0.7, 0.95, 1.1)}
 CARTOES = ["cartao_abertura1", "cartao_abertura2", "cartao_abertura3", "cartao_catacumbas", "cartao_abismo",
-           "cartao_final1", "cartao_final2", "cartao_fim", "titulo"]
+           "cartao_final1", "cartao_final2", "cartao_fim", "titulo"]  # "titulo" sai como fundo_titulo
 
 
 def mascara(a):
@@ -215,7 +215,7 @@ def cartoes():
         if alvo_h <= h:
             im = im.crop((0, (h - alvo_h) // 2, w, (h - alvo_h) // 2 + alvo_h))
         im = im.resize((640, 360), Image.BOX).quantize(colors=64, method=Image.Quantize.MEDIANCUT).convert("RGB")
-        im.save(HD / f"{nome}.png")
+        im.save(HD / ("fundo_titulo.png" if nome == "titulo" else f"{nome}.png"))   # "titulo" é o logo clássico
 
 
 if __name__ == "__main__":

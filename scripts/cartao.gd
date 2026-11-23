@@ -21,6 +21,9 @@ var _icone: Sprite2D
 var _titulo: Label
 var _texto: Label
 var _acabou := false
+var _ilustracao: Sprite2D
+var _faixa: ColorRect
+var _painel_torre: ColorRect
 
 
 static func mostrar(pai: Node, paginas_: Array, quem: String, duracao_ := 3.5) -> Cartao:
@@ -39,6 +42,22 @@ func _ready() -> void:
 	_fundo.size = Vector2(640, 360)
 	_fundo.modulate.a = 0.0
 	add_child(_fundo)
+	_ilustracao = Sprite2D.new()
+	_ilustracao.centered = false
+	_ilustracao.visible = false
+	_fundo.add_child(_ilustracao)
+	_faixa = ColorRect.new()
+	_faixa.color = Color(0.02, 0.01, 0.04, 0.78)
+	_faixa.position = Vector2(0, 252)
+	_faixa.size = Vector2(640, 108)
+	_faixa.visible = false
+	_fundo.add_child(_faixa)
+	_painel_torre = ColorRect.new()
+	_painel_torre.color = Color(0.02, 0.01, 0.04, 0.6)
+	_painel_torre.position = Vector2(0, 30)
+	_painel_torre.size = Vector2(206, 212)
+	_painel_torre.visible = false
+	_fundo.add_child(_painel_torre)
 	_torre = Node2D.new()
 	_torre.draw.connect(_desenhar_torre)
 	_fundo.add_child(_torre)
@@ -70,10 +89,36 @@ func pagina_atual() -> int:
 	return _i
 
 
+func ilustracao_visivel() -> bool:
+	return _ilustracao.visible
+
+
+func texto_atual() -> String:
+	return _texto.text
+
+
 func _montar() -> void:
 	var p: Dictionary = paginas[_i]
 	_titulo.text = p.get("titulo", "")
 	_texto.text = p.get("texto", "")
+	# Detalhado: ilustração em tela cheia, texto numa faixa embaixo; a torre só nas subidas
+	var img: String = p.get("imagem", "")
+	var ilustrado := img != "" and Visual.modo == Visual.DETALHADO and Visual.tem_hd(img)
+	_ilustracao.visible = ilustrado
+	_faixa.visible = ilustrado
+	if ilustrado:
+		_ilustracao.texture = Visual._carregar(Visual.caminho_hd(img))
+		_titulo.position = Vector2(32, 262)
+		_texto.position = Vector2(32, 294)
+		_texto.size = Vector2(576, 60)
+	else:
+		_titulo.position = Vector2(216, 100)
+		_texto.position = Vector2(216, 144)
+		_texto.size = Vector2(400, 180)
+	var subida: bool = p.get("de", 0) != p.get("para", 0)
+	_torre.visible = not ilustrado or subida
+	_icone.visible = _torre.visible
+	_painel_torre.visible = ilustrado and subida
 	_t = 0.0
 	_torre.queue_redraw()
 

@@ -27,7 +27,7 @@ const HD := ["heroi", "espadachim", "alquimista", "cacador", "morcego", "slime",
 	"chao_catacumbas", "chao2_catacumbas", "chao3_catacumbas", "parede_catacumbas", "pilar_catacumbas",
 	"chao_abismo", "chao2_abismo", "chao3_abismo", "parede_abismo", "pilar_abismo", "cartao_abertura1",
 	"cartao_abertura2", "cartao_abertura3", "cartao_catacumbas", "cartao_abismo", "cartao_final1", "cartao_final2",
-	"cartao_fim", "titulo"]
+	"cartao_fim", "fundo_titulo"]
 const OUTRAS := ["titulo", "texto_fim", "texto_vitoria", "texto_aperte", "brilho", "vinheta"]
 const SONS := ["tiro", "acerto", "morte_inimigo", "dano", "item", "porta", "vitoria", "derrota", "fonte"]
 
