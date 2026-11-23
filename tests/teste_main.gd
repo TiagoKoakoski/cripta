@@ -29,6 +29,7 @@ func _rodar() -> void:
 		await frames(30)   # o último cartão some num esmaecer de 0,4 s
 		paginas += 1
 	checa(paginas == 3 and main.estado == "jogando" and main.andar != null, "3 cartões da abertura e começa a partida (%d)" % paginas)
+	checa(main.andar.scale == Vector2(2, 2), "mundo desenhado em 2x (640x360)")
 	var semente1: int = main.partida.semente
 	main.partida.pegar_item("espada")
 	main.partida.pegar_item("botas")

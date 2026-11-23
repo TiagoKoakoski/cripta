@@ -20,8 +20,7 @@ static func criar(pai: Node, pos: Vector2, duracao_ := 3.0, jogador := false, ra
 	f.collision_layer = 0
 	f.collision_mask = Camadas.INIMIGO if jogador else Camadas.JOGADOR
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/fogo.png") if ResourceLoader.exists("res://arte/fogo.png") else load("res://arte/sombra.png")
-	s.hframes = 2 if ResourceLoader.exists("res://arte/fogo.png") else 1
+	Visual.aplicar(s, "fogo", 1.0, 2)
 	s.z_index = -4
 	f.add_child(s)
 	var c := CollisionShape2D.new()
@@ -36,8 +35,7 @@ func _physics_process(delta: float) -> void:
 	_t -= delta
 	_tique -= delta
 	var s := get_child(0) as Sprite2D
-	if s.hframes == 2:
-		s.frame = int(_t * 8.0) % 2
+	s.frame = int(_t * 8.0) % s.hframes
 	modulate.a = clampf(_t / 0.5, 0.0, 1.0)
 	for corpo: Node in get_overlapping_bodies():
 		if not do_jogador and corpo is Jogador:

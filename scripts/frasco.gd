@@ -25,7 +25,7 @@ static func lancar(pai: Node, p: Partida, de: Vector2, alvo_: Vector2, raio_: fl
 	f.quiques = 1 if p.ricochete else 0
 	f.z_index = 3
 	f._sprite = Sprite2D.new()
-	f._sprite.texture = load("res://arte/frasco.png") if ResourceLoader.exists("res://arte/frasco.png") else load("res://arte/tiro.png")
+	Visual.aplicar(f._sprite, "frasco")
 	f.add_child(f._sprite)
 	pai.add_child(f)
 	return f

@@ -33,7 +33,7 @@ func _agir(delta: float) -> void:
 				_alvo = jogador.position.clamp(Vector2(40, 40), Vector2(280, 136))
 				_mostrar_aviso(true)
 		"mirar":
-			_sprite.scale.y = (_escala * (0.85 + 0.1 * sin(_t * 30.0))) * (0.5 if _sprite.texture.get_width() >= 64 else 1.0)
+			_sprite.scale.y = (_escala * (0.85 + 0.1 * sin(_t * 30.0))) * Visual.fator(_sprite)
 			if _t <= 0.0:
 				_estado_s = "salto"
 				_t = 0.6
@@ -63,7 +63,7 @@ func _pousar() -> void:
 func _mostrar_aviso(sim: bool) -> void:
 	if _aviso == null or not is_instance_valid(_aviso):
 		_aviso = Sprite2D.new()
-		_aviso.texture = load("res://arte/sombra.png")
+		Visual.aplicar(_aviso, "sombra")
 		_aviso.modulate = Color(1, 0.3, 0.3, 0.8)
 		_aviso.z_index = -4
 		sala.add_child(_aviso)

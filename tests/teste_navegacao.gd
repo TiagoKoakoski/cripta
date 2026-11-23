@@ -218,7 +218,7 @@ func teste_minimapa_dentro_do_canto() -> void:
 			a.entrar(p, Vector2i.DOWN)
 			for r: Rect2 in a.hud.retangulos_mapa():
 				var tela := Rect2(r.position + a.hud.origem_mapa(), r.size)
-				if not Rect2(244, 0, 76, 40).encloses(tela):
+				if not Rect2(488, 0, 152, 80).encloses(tela):
 					checa(false, "minimapa fora do canto: %s" % tela)
 					await fim(a)
 					return

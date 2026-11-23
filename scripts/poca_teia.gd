@@ -15,8 +15,7 @@ static func criar(pai: Node, pos: Vector2) -> void:
 	p.collision_layer = 0
 	p.collision_mask = Camadas.JOGADOR
 	var s := Sprite2D.new()
-	s.texture = Inimigo.textura("poca_teia") if ResourceLoader.exists("res://arte/poca_teia.png") else load("res://arte/sombra.png")
-	s.scale = Vector2(1.6, 1.6)
+	Visual.aplicar(s, "poca_teia", 1.6)
 	s.z_index = -5
 	p.add_child(s)
 	var c := CollisionShape2D.new()

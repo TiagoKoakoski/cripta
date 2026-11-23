@@ -44,9 +44,10 @@ static func criar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, 
 	return e
 
 
-static func textura(nome: String) -> Texture2D:
-	var caminho := "res://arte/%s.png" % SPRITE.get(nome, nome)
-	return load(caminho) if ResourceLoader.exists(caminho) else load("res://arte/rei.png")
+## nome da arte de um tipo (sem arte própria, usa a do Rei)
+static func nome_sprite(tipo_: String) -> String:
+	var nome: String = SPRITE.get(tipo_, tipo_)
+	return nome if ResourceLoader.exists("res://arte/%s.png" % nome) else "rei"
 
 
 func _montar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, semente: int) -> void:
@@ -63,8 +64,7 @@ func _montar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, semen
 	collision_mask = Camadas.PAREDE if tipo_ in VOADORES else Camadas.PAREDE | Camadas.PILAR
 	Efeitos.sombra_para(self, 6.0 if tipo_ in VOADORES else 0.0)
 	_sprite = Sprite2D.new()
-	_sprite.texture = Inimigo.textura(tipo_)
-	_sprite.hframes = 2
+	Visual.aplicar(_sprite, Inimigo.nome_sprite(tipo_), 1.0, 2)
 	add_child(_sprite)
 	var c := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
@@ -145,7 +145,9 @@ func _physics_process(delta: float) -> void:
 		return
 	_t -= delta
 	_anim += delta
-	_sprite.frame = int(_anim * 5.0) % 2
+	_sprite.frame = int(_anim * 5.0) % _sprite.hframes
+	if _sprite.hframes == 1:   # detalhado: 1 quadro, respira
+		_sprite.offset.y = sin(_anim * 6.0) * 1.5
 	_flash = maxf(0.0, _flash - delta)
 	lento = maxf(0.0, lento - delta)
 	if _flash > 0.0:

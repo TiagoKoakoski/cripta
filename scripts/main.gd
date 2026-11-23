@@ -108,6 +108,7 @@ func comecar() -> void:
 	if andar:
 		andar.queue_free()
 	andar = Andar.new()
+	andar.scale = Vector2(2, 2)   # o mundo vive em 320x176 e é desenhado em 640x360
 	for a: String in OS.get_cmdline_user_args():
 		if a.begins_with("--chefe="):
 			andar.chefe_forcado = a.split("=", true, 1)[1]
@@ -168,52 +169,41 @@ func _mostrar_tela(qual: String, com_espera := true) -> void:
 	_tela = Node2D.new()
 	add_child(_tela)
 	var titulo := {"titulo": "titulo", "fim": "texto_fim", "vitoria": "texto_vitoria"}[qual] as String
-	_imagem(titulo, Vector2(160, 40))
-	_imagem("texto_aperte", Vector2(160, 160))
+	_imagem(titulo, Vector2(320, 80))
+	_texto("aperte um botão", Vector2(0, 318), 16, Color(0.8, 0.75, 0.68))
 	var quem: String = Partida.PERSONAGENS[selecionado]
 	if qual == "titulo":
 		for i in Partida.PERSONAGENS.size():
 			var r := Sprite2D.new()
-			r.texture = load("res://arte/%s.png" % Jogador.sprite_de(Partida.PERSONAGENS[i]))
-			r.hframes = 8
-			r.scale = Vector2(2, 2) if i == selecionado else Vector2(1.5, 1.5)
+			Visual.aplicar(r, Jogador.sprite_de(Partida.PERSONAGENS[i]), 4.0 if i == selecionado else 3.0, 8)
+			r.frame = 0
 			r.modulate = Color.WHITE if i == selecionado else Color(0.45, 0.42, 0.5)
-			r.position = Vector2(85 + i * 50, 84)
+			r.position = Vector2(170 + i * 100, 168)
 			_tela.add_child(r)
-		_texto("<  %s  >" % NOMES[quem], Vector2(0, 104))
-		_texto(RESUMO[quem], Vector2(0, 114))
+		_texto("<  %s  >" % NOMES[quem], Vector2(0, 212), 20, Color(1, 0.88, 0.55))
+		_texto(RESUMO[quem], Vector2(0, 240), 16)
+		_texto("recorde: %d" % partida.recorde_de(quem), Vector2(0, 270), 16)
 	else:
-		_texto("ANDAR %d" % partida.andar_atual, Vector2(0, 80))
-		_imagem("icone_combate", Vector2(130, 104))
-		_numero(partida.pontos(), Vector2(160, 104))
-	_imagem("icone_chefe", Vector2(130, 132))
-	_numero(partida.recorde_de(quem) if qual == "titulo" else partida.recorde, Vector2(160, 132))
+		_texto("chegou ao andar %d" % partida.andar_atual, Vector2(0, 170), 20, Color(1, 0.88, 0.55))
+		_texto("pontos: %d" % partida.pontos(), Vector2(0, 205), 18)
+		_texto("recorde: %d" % partida.recorde, Vector2(0, 235), 18)
 
 
-func _texto(t: String, pos: Vector2) -> void:
+func _texto(t: String, pos: Vector2, tam := 16, cor := Color(0.95, 0.9, 0.78)) -> void:
 	var l := Label.new()
 	l.text = t
 	l.position = pos
-	l.size = Vector2(320, 12)
+	l.size = Vector2(640, tam + 8)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", 8)
-	l.add_theme_color_override("font_color", Color(0.95, 0.9, 0.78))
+	l.add_theme_font_size_override("font_size", tam)
+	l.add_theme_color_override("font_color", cor)
+	l.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.08))
+	l.add_theme_constant_override("outline_size", 6)
 	_tela.add_child(l)
 
 
 func _imagem(nome: String, pos: Vector2) -> void:
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/%s.png" % nome)
+	Visual.aplicar(s, nome, 2.0)
 	s.position = pos
 	_tela.add_child(s)
-
-
-func _numero(n: int, pos: Vector2) -> void:
-	var txt := str(n)
-	for i in txt.length():
-		var s := Sprite2D.new()
-		s.texture = load("res://arte/digitos.png")
-		s.hframes = 10
-		s.frame = int(txt[i])
-		s.position = pos + Vector2(i * 11, 0)
-		_tela.add_child(s)

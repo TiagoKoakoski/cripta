@@ -56,7 +56,7 @@ static func criar_chefe(nome: String, pos: Vector2, jogador_: Node2D, sala_: Nod
 
 func _ajustar_escala(e: float) -> void:
 	_escala = e
-	_sprite.scale = Vector2(e, e) * (0.5 if _sprite.texture.get_width() >= 64 else 1.0)
+	Visual.aplicar(_sprite, _sprite.get_meta("visual_nome", "rei"), e, 2)
 	var r := (get_node("Corpo") as CollisionShape2D).shape as RectangleShape2D
 	r.size = Vector2(11, 10) * e
 

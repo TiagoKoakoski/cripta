@@ -13,6 +13,7 @@ var _passo := 0.0
 var _olhar := Vector2.DOWN
 var _sprite: Sprite2D
 var _corpo: Area2D
+var _andando := false
 var arma: RefCounted   # ArmaTiro ou ArmaLamina
 
 
@@ -31,8 +32,7 @@ static func criar(p: Partida, sala_: Node2D, pos: Vector2) -> Jogador:
 	j.collision_mask = Camadas.PAREDE | Camadas.PILAR
 	Efeitos.sombra_para(j, 1.0)
 	j._sprite = Sprite2D.new()
-	j._sprite.texture = load("res://arte/%s.png" % Jogador.sprite_de(p.personagem))
-	j._sprite.hframes = 8
+	Visual.aplicar(j._sprite, Jogador.sprite_de(p.personagem), 1.0, 8)
 	j.add_child(j._sprite)
 	var c := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
@@ -73,7 +73,8 @@ func _physics_process(delta: float) -> void:
 	_recarga = maxf(0.0, _recarga - delta)
 	if mira != Vector2.ZERO and _recarga == 0.0:
 		_atirar(mira)
-	_passo += delta * (1.0 if mover != Vector2.ZERO else 0.0)
+	_andando = mover != Vector2.ZERO
+	_passo += delta * (1.0 if _andando else 0.0)
 	_animar()
 	for corpo: Node2D in _corpo.get_overlapping_bodies():
 		if corpo is Inimigo and (corpo as Inimigo).perigoso():
@@ -114,5 +115,10 @@ func _animar() -> void:
 		base = 4
 	elif _olhar == Vector2.LEFT:
 		base = 6
-	_sprite.frame = base + (int(_passo * 6.0) % 2)
+	if _sprite.hframes == 4:   # detalhado: 1 quadro por direção e um balanço ao andar
+		_sprite.frame = base / 2
+		_sprite.offset.y = -absf(sin(_passo * 10.0)) * 3.0 if _andando else 0.0
+	else:
+		_sprite.frame = base + (int(_passo * 6.0) % 2)
+		_sprite.offset.y = 0.0
 	visible = partida.invencivel <= 0.0 or int(partida.invencivel * 15.0) % 2 == 0

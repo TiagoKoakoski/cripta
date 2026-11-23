@@ -42,7 +42,7 @@ static func explosao(pai: Node, pos: Vector2) -> void:
 
 static func sombra_para(no: Node2D, dy := 0.0) -> void:
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/sombra.png")
+	Visual.aplicar(s, "sombra")
 	s.position = Vector2(0, dy)
 	s.z_index = -1
 	s.show_behind_parent = true

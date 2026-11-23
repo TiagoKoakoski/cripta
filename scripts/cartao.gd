@@ -36,21 +36,20 @@ static func mostrar(pai: Node, paginas_: Array, quem: String, duracao_ := 3.5) -
 func _ready() -> void:
 	_fundo = ColorRect.new()
 	_fundo.color = Color(0.03, 0.02, 0.05)
-	_fundo.size = Vector2(320, 180)
+	_fundo.size = Vector2(640, 360)
 	_fundo.modulate.a = 0.0
 	add_child(_fundo)
 	_torre = Node2D.new()
 	_torre.draw.connect(_desenhar_torre)
 	_fundo.add_child(_torre)
 	_icone = Sprite2D.new()
-	_icone.texture = load("res://arte/%s.png" % Jogador.sprite_de(personagem))
-	_icone.hframes = 8
-	_icone.frame = 4   # de costas, subindo
+	Visual.aplicar(_icone, Jogador.sprite_de(personagem), 2.0, 8)
+	_icone.frame = 2 if _icone.hframes == 4 else 4   # de costas, subindo
 	_fundo.add_child(_icone)
-	_titulo = _label(Vector2(108, 52), 10, Color(1, 0.85, 0.45))
-	_texto = _label(Vector2(108, 72), 8, Color(0.92, 0.88, 0.8))
+	_titulo = _label(Vector2(216, 100), 22, Color(1, 0.85, 0.45))
+	_texto = _label(Vector2(216, 144), 17, Color(0.95, 0.92, 0.85))
 	_texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_texto.size = Vector2(204, 80)
+	_texto.size = Vector2(400, 180)
 	create_tween().tween_property(_fundo, "modulate:a", 1.0, FADE)
 	_montar()
 
@@ -58,9 +57,11 @@ func _ready() -> void:
 func _label(pos: Vector2, tam: int, cor: Color) -> Label:
 	var l := Label.new()
 	l.position = pos
-	l.size = Vector2(200, 16)
+	l.size = Vector2(400, 32)
 	l.add_theme_font_size_override("font_size", tam)
 	l.add_theme_color_override("font_color", cor)
+	l.add_theme_color_override("font_outline_color", Color(0.03, 0.02, 0.05))
+	l.add_theme_constant_override("outline_size", 6)
 	_fundo.add_child(l)
 	return l
 
@@ -99,8 +100,12 @@ func _process(delta: float) -> void:
 	var p: Dictionary = paginas[_i]
 	var k := clampf((_t - 0.3) / 1.0, 0.0, 1.0)
 	var y := lerpf(_y_andar(p.get("de", 0)), _y_andar(p.get("para", 0)), k * k * (3.0 - 2.0 * k))
-	_icone.position = Vector2(74, y - 2.0)
-	_icone.frame = 4 + int(_t * 6.0) % 2 if k < 1.0 else 4
+	_icone.position = Vector2(148, (y - 2.0) * 2.0)
+	if _icone.hframes == 4:
+		_icone.frame = 2
+		_icone.offset.y = -absf(sin(_t * 10.0)) * 3.0 if k < 1.0 else 0.0
+	else:
+		_icone.frame = 4 + int(_t * 6.0) % 2 if k < 1.0 else 4
 	if _t >= duracao:
 		_t = MIN
 		avancar()
@@ -114,12 +119,12 @@ func _desenhar_torre() -> void:
 	var p: Dictionary = paginas[_i] if _i < paginas.size() else {}
 	var nomes := ["CRIPTA", "CATACUMBAS", "ABISMO"]
 	var cores := [Color(0.35, 0.28, 0.42), Color(0.45, 0.36, 0.26), Color(0.18, 0.3, 0.38)]
-	_torre.draw_rect(Rect2(50, 20, 48, 2), Color(0.5, 0.8, 1.0, 0.6))   # a fenda no céu
+	_torre.draw_rect(Rect2(100, 40, 96, 4), Color(0.5, 0.8, 1.0, 0.6))   # a fenda no céu
 	for n in 3:
-		var y := _y_andar(n + 1) - 16.0
+		var y := (_y_andar(n + 1) - 16.0) * 2.0
 		var destaque: bool = n + 1 == p.get("para", 0)
-		var r := Rect2(54, y, 40, 32)
+		var r := Rect2(108, y, 80, 64)
 		_torre.draw_rect(r, cores[n].lightened(0.25) if destaque else cores[n])
-		_torre.draw_rect(r, Color(0.08, 0.05, 0.1), false, 1.0)
-		_torre.draw_string(ThemeDB.fallback_font, Vector2(2, y + 19), nomes[n], HORIZONTAL_ALIGNMENT_LEFT, 50, 6,
+		_torre.draw_rect(r, Color(0.08, 0.05, 0.1), false, 2.0)
+		_torre.draw_string(ThemeDB.fallback_font, Vector2(4, y + 38), nomes[n], HORIZONTAL_ALIGNMENT_LEFT, 100, 12,
 			Color(1, 0.9, 0.6) if destaque else Color(0.6, 0.55, 0.65))

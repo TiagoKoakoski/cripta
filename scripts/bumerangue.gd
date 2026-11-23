@@ -33,7 +33,7 @@ static func lancar(j: Jogador, dir: Vector2) -> Bumerangue:
 	b.collision_layer = Camadas.TIRO_JOGADOR
 	b.collision_mask = Camadas.INIMIGO | Camadas.PAREDE | Camadas.PILAR
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/bumerangue.png") if ResourceLoader.exists("res://arte/bumerangue.png") else load("res://arte/tiro.png")
+	Visual.aplicar(s, "bumerangue")
 	s.name = "Sprite"
 	b.add_child(s)
 	var c := CollisionShape2D.new()

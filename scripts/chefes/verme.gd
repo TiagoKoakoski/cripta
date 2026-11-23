@@ -74,7 +74,7 @@ func _enterrar(tempo := 1.2) -> void:
 func _mostrar_tremor(sim: bool) -> void:
 	if _tremor == null or not is_instance_valid(_tremor):
 		_tremor = Sprite2D.new()
-		_tremor.texture = load("res://arte/sombra.png")
+		Visual.aplicar(_tremor, "sombra")
 		_tremor.modulate = Color(0.6, 0.45, 0.25, 0.9)
 		_tremor.scale = Vector2(2.4, 3.0)
 		_tremor.z_index = -4

@@ -264,11 +264,11 @@ func _criar_objeto(sprite: String, sobre: String) -> void:
 	_objeto = Node2D.new()
 	_objeto.position = Vector2(160, 88)
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/%s.png" % sprite)
+	Visual.aplicar(s, sprite)
 	_objeto.add_child(s)
 	if sobre != "":
 		var s2 := Sprite2D.new()
-		s2.texture = load("res://arte/%s.png" % sobre)
+		Visual.aplicar(s2, sobre)
 		s2.position = Vector2(0, -6)
 		s2.name = "Item"
 		_objeto.add_child(s2)
@@ -328,7 +328,7 @@ func _soltar_chave() -> void:
 	_chave.collision_layer = 0
 	_chave.collision_mask = Camadas.JOGADOR
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/chave.png")
+	Visual.aplicar(s, "chave")
 	_chave.add_child(s)
 	var c := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
@@ -368,7 +368,7 @@ func mostrar_escada() -> void:
 	_escada.collision_layer = 0
 	_escada.collision_mask = Camadas.JOGADOR
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/escada.png")
+	Visual.aplicar(s, "escada")
 	s.z_index = -5
 	_escada.add_child(s)
 	var c := CollisionShape2D.new()
@@ -398,7 +398,7 @@ func _soltar_coracao() -> void:
 	_coracao.collision_layer = 0
 	_coracao.collision_mask = Camadas.JOGADOR
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/coracao_chao.png")
+	Visual.aplicar(s, "coracao_chao")
 	_coracao.add_child(s)
 	var c := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
@@ -433,9 +433,9 @@ func objeto_usado() -> bool:
 
 func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
 	var tm := _tema
-	var chao := [load("res://arte/chao_%s.png" % tm), load("res://arte/chao2_%s.png" % tm), load("res://arte/chao3_%s.png" % tm)]
-	var parede: Texture2D = load("res://arte/parede_%s.png" % tm)
-	var pilar: Texture2D = load("res://arte/pilar_%s.png" % tm)
+	var chao := ["chao_%s" % tm, "chao2_%s" % tm, "chao3_%s" % tm]
+	var parede := "parede_%s" % tm
+	var pilar := "pilar_%s" % tm
 	var vaos := {}
 	for d: Vector2i in portas:
 		for t: Vector2i in _tiles_porta(d):
@@ -446,7 +446,7 @@ func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
 			var t := Vector2i(x, y)
 			var borda := x == 0 or y == 0 or x == COLS - 1 or y == LINS - 1
 			var v := (x * 7 + y * 13 + x * y) % 9
-			var tex: Texture2D = chao[2 if v == 0 else (1 if v < 3 else 0)]
+			var tex: String = chao[2 if v == 0 else (1 if v < 3 else 0)]
 			if borda and not vaos.has(t):
 				tex = parede
 				_solido(t, Camadas.PAREDE)
@@ -456,8 +456,8 @@ func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
 			elif borda:
 				continue  # vão da porta: desenhado pela porta
 			var s := Sprite2D.new()
-			s.texture = tex
 			s.centered = false
+			Visual.aplicar(s, tex)
 			s.position = Vector2(t * T)
 			s.z_index = -10
 			add_child(s)
@@ -477,21 +477,20 @@ func _decorar() -> void:
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	for x: int in [4, 15]:
 		var t := Sprite2D.new()
-		t.texture = load("res://arte/tocha.png")
-		t.hframes = 2
+		Visual.aplicar(t, "tocha", 1.0, 2)
 		t.position = Vector2(x * T + 8, 9)
 		t.z_index = -7
 		add_child(t)
 		_tochas.append(t)
 		var b := Sprite2D.new()
-		b.texture = load("res://arte/brilho.png")
+		Visual.aplicar(b, "brilho")
 		b.material = mat
 		b.position = t.position + Vector2(0, 6)
 		b.z_index = -6
 		add_child(b)
 		_brilhos.append(b)
 	var v := Sprite2D.new()
-	v.texture = load("res://arte/vinheta.png")
+	Visual.aplicar(v, "vinheta")
 	v.centered = false
 	v.z_index = 30
 	add_child(v)
@@ -500,7 +499,7 @@ func _decorar() -> void:
 func _process(delta: float) -> void:
 	_t_deco += delta
 	for i in _tochas.size():
-		_tochas[i].frame = int(_t_deco * 6.0 + i) % 2
+		_tochas[i].frame = int(_t_deco * 6.0 + i) % _tochas[i].hframes
 		var f := 1.0 + 0.08 * sin(_t_deco * 11.0 + i * 2.0) + 0.05 * sin(_t_deco * 23.0)
 		_brilhos[i].scale = Vector2(f, f)
 
@@ -571,8 +570,8 @@ func textura_porta(d: Vector2i) -> String:
 func _atualizar_portas() -> void:
 	for d: Vector2i in _portas:
 		var fechar := porta_trancada(d)
-		var tex: Texture2D = load(textura_porta(d))
+		var nome := textura_porta(d).get_file().get_basename()
 		for s: Sprite2D in _portas[d]["sprites"]:
-			s.texture = tex
+			Visual.aplicar(s, nome)
 		for b: Node in (_portas[d]["grade"] as Node2D).get_children():
 			(b as StaticBody2D).collision_layer = Camadas.PAREDE if fechar else 0

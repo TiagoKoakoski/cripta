@@ -33,7 +33,7 @@ static func criar(pos: Vector2, dir: Vector2, jogador: bool, dano_: int, vel := 
 	t.velocidade = vel
 	t.vida = duracao
 	var s := Sprite2D.new()
-	s.texture = load("res://arte/%s.png" % ("tiro" if jogador else "tiro_inimigo"))
+	Visual.aplicar(s, "tiro" if jogador else "tiro_inimigo")
 	t.add_child(s)
 	var c := CollisionShape2D.new()
 	var forma := CircleShape2D.new()
