@@ -14,7 +14,8 @@ func _initialize() -> void:
 func _rodar() -> void:
 	for t: String in ["teste_aranha_salta", "teste_fantasma_atravessa_pilar", "teste_fantasma_fica_na_sala",
 			"teste_olho_cruz_e_x", "teste_mago_teleporta_e_atira", "teste_surgindo_nao_fere",
-			"teste_surgindo_tranca", "teste_empurrao", "teste_novos_morrem_e_abrem", "teste_distribuicao"]:
+			"teste_surgindo_tranca", "teste_empurrao", "teste_novos_morrem_e_abrem", "teste_distribuicao",
+			"teste_animacao_detalhado"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -214,3 +215,37 @@ func teste_distribuicao() -> void:
 		no_max_um = no_max_um and longe.count("mago") <= 1 and longe.count("olho") <= 1 and longe.size() == 6
 	checa(perto_ok, "perto do início só morcego, slime e aranha")
 	checa(viu_mago and no_max_um, "andar 3 longe aparece o mago; 6 inimigos; no máximo 1 olho e 1 mago")
+
+
+## detalhado: quem anda não flutua (pés no chão), voador balança; personagem tem passos de verdade
+func teste_animacao_detalhado() -> void:
+	Visual.arquivo = "user://teste_config.cfg"
+	Visual.definir_modo("detalhado")
+	var sala := montar([{"tipo": "esqueleto", "pos": Vector2(60, 140)}, {"tipo": "morcego", "pos": Vector2(250, 40)}])
+	var esq: Inimigo = sala._inimigos[0]
+	var morc: Inimigo = sala._inimigos[1]
+	var ofs_esq := {}
+	var ofs_morc := {}
+	for i in 90:
+		await physics_frame
+		ofs_esq[snappedf(esq._sprite.offset.y, 0.1)] = true
+		ofs_morc[snappedf(morc._sprite.offset.y, 0.1)] = true
+	checa(ofs_esq.keys() == [0.0], "esqueleto não sobe e desce no ar (%s)" % [ofs_esq.keys()])
+	checa(ofs_morc.size() > 3, "morcego balança no ar")
+	var j := sala.jogador
+	checa(j._sprite.hframes == 12, "personagem detalhado: 12 quadros (%d)" % j._sprite.hframes)
+	var quadros := {}
+	Input.action_press("mover_direita")
+	for i in 40:
+		await physics_frame
+		quadros[j._sprite.frame] = true
+	Input.action_release("mover_direita")
+	checa(quadros.has(4) and quadros.has(5) and quadros.keys().all(func(q: int) -> bool: return q >= 3 and q <= 5),
+		"andando para a direita alterna os passos 3..5 (%s)" % [quadros.keys()])
+	for i in 3:
+		await physics_frame
+	checa(j._sprite.frame == 3, "parado: quadro neutro da direção (%d)" % j._sprite.frame)
+	Visual.definir_modo("classico")
+	checa(j._sprite.hframes == 8 and esq._sprite.offset.y == 0.0, "clássico continua com 8 quadros")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Visual.arquivo))
+	await desmontar(sala)

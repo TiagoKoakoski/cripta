@@ -146,10 +146,7 @@ func _physics_process(delta: float) -> void:
 	_t -= delta
 	_anim += delta
 	_sprite.frame = int(_anim * 5.0) % _sprite.hframes
-	if _sprite.hframes == 1:   # detalhado: 1 quadro, respira
-		_sprite.offset.y = sin(_anim * 6.0) * 1.5
-	else:
-		_sprite.offset.y = 0.0
+	_animar_detalhado()
 	_flash = maxf(0.0, _flash - delta)
 	lento = maxf(0.0, lento - delta)
 	if _flash > 0.0:
@@ -301,3 +298,26 @@ func _sombra_menor() -> void:
 		_t = 1.6
 		var d := _para_jogador()
 		sala.add_child(Tiro.criar(position + d * 9.0, d, false, 1, 90.0, 3.0))
+
+
+## detalhado (1 quadro só): voador balança no ar; quem anda gira de leve de um pé pro outro,
+## com o eixo nos pés (não flutua); slime achata e estica. No clássico, tudo zerado.
+func _animar_detalhado() -> void:
+	_sprite.offset = Vector2.ZERO
+	_sprite.rotation = 0.0
+	_sprite.skew = 0.0
+	_sprite.position.x = 0.0
+	if _sprite.hframes != 1 or not Visual.e_hd(_sprite):
+		return
+	if tipo in VOADORES:
+		_sprite.offset.y = sin(_anim * 6.0) * 1.5
+		return
+	if tipo.begins_with("slime"):
+		_sprite.skew = sin(_anim * 5.0) * 0.12   # balança como gelatina
+	else:
+		var andando := velocity.length() > 5.0
+		_sprite.rotation = sin(_anim * (12.0 if andando else 3.0)) * (0.08 if andando else 0.03)
+	# o giro/inclinação é em volta do centro: compensa para os pés ficarem parados no chão
+	var pe := Vector2(0.0, _sprite.texture.get_height() / 2.0)
+	var desvio := Transform2D(_sprite.rotation, _sprite.scale, _sprite.skew, Vector2.ZERO) * pe - pe * _sprite.scale
+	_sprite.position.x = -desvio.x

@@ -295,4 +295,10 @@ func teste_portas_por_tipo() -> void:
 	partida.tem_chave = true
 	sala.destrancar_chefe()
 	checa(sala.textura_porta(Vector2i.DOWN).ends_with("porta_chefe.png"), "com a chave, porta do chefe aberta")
+	# portas de cima/baixo têm 2 tiles: 1 sprite largo só (não 2 portas lado a lado)
+	var cima := sala.sprites_porta(Vector2i.UP)
+	checa(cima.size() == 1 and cima[0].texture.resource_path.ends_with("porta_tesouro_larga.png"),
+		"porta de cima: 1 sprite largo (%s)" % [cima.map(func(x: Sprite2D) -> String: return x.texture.resource_path)])
+	var lado := sala.sprites_porta(Vector2i.LEFT)
+	checa(lado.size() == 1 and lado[0].texture.resource_path.ends_with("porta_fonte.png"), "porta do lado: 1 sprite normal")
 	await desmontar(sala)

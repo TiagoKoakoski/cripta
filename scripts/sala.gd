@@ -641,13 +641,12 @@ func _criar_porta(d: Vector2i, tipo_vizinho: int) -> void:
 	var no := Node2D.new()
 	add_child(no)
 	var sprites: Array[Sprite2D] = []
-	for t: Vector2i in _tiles_porta(d):
-		var s := Sprite2D.new()
-		s.centered = false
-		s.position = Vector2(t * T)
-		s.z_index = -9
-		no.add_child(s)
-		sprites.append(s)
+	var s := Sprite2D.new()   # cima/baixo: 2 tiles, 1 sprite largo (*_larga)
+	s.centered = false
+	s.position = Vector2(_tiles_porta(d)[0] * T)
+	s.z_index = -9
+	no.add_child(s)
+	sprites.append(s)
 	var grade := Node2D.new()
 	no.add_child(grade)
 	for t: Vector2i in _tiles_porta(d):
@@ -668,6 +667,10 @@ func _criar_porta(d: Vector2i, tipo_vizinho: int) -> void:
 	_portas[d] = {"grade": grade, "sprites": sprites}
 
 
+func sprites_porta(d: Vector2i) -> Array[Sprite2D]:
+	return _portas[d]["sprites"] if _portas.has(d) else [] as Array[Sprite2D]
+
+
 func textura_porta(d: Vector2i) -> String:
 	var tipo_v: int = _tipo_porta.get(d, GeradorAndar.COMBATE)
 	if tipo_v == GeradorAndar.CHEFE and _chefe_trancado and not partida.tem_chave:
@@ -680,7 +683,7 @@ func textura_porta(d: Vector2i) -> String:
 func _atualizar_portas() -> void:
 	for d: Vector2i in _portas:
 		var fechar := porta_trancada(d)
-		var nome := textura_porta(d).get_file().get_basename()
+		var nome := textura_porta(d).get_file().get_basename() + ("_larga" if d.y != 0 else "")
 		for s: Sprite2D in _portas[d]["sprites"]:
 			Visual.aplicar(s, nome)
 		for b: Node in (_portas[d]["grade"] as Node2D).get_children():

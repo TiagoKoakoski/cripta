@@ -82,6 +82,31 @@ def _sobrepoe(a, b):
     return largura > 0.5 * min(a[2] - a[0], b[2] - b[0]) and folga_v < 25
 
 
+def linha_vazia(im, de=0.25, ate=0.6):
+    """Linha horizontal com menos figura entre as 2 fileiras (corta entre elas, sem decepar nenhuma)."""
+    m = mascara(np.asarray(im.convert("RGB")))
+    a, b = int(im.height * de), int(im.height * ate)
+    return a + int(np.argmin(m[a:b].sum(axis=1)))
+
+
+def so_fileira_de_baixo(im):
+    """As 2 fileiras quase se encostam (ponta de flecha de uma passa da outra): apaga (pinta de magenta)
+    tudo que é da fileira de cima, pelo centro de cada pedaço, e corta com folga acima da de baixo."""
+    a = np.asarray(im.convert("RGB")).copy()
+    corte = linha_vazia(im)
+    rot, n = ndimage.label(mascara(a))
+    centros = ndimage.center_of_mass(np.ones_like(rot), rot, range(1, n + 1))
+    de_cima = [i + 1 for i, (cy, _) in enumerate(centros) if cy < corte]
+    a[np.isin(rot, de_cima)] = (255, 0, 255)
+    return Image.fromarray(a).crop((0, max(0, corte - 40), im.width, im.height))
+
+
+def cortada(im, c, limite=6):
+    """A figura passa da borda de cima/baixo da imagem (figura de pixels na 1ª/última linha)."""
+    m = mascara(np.asarray(im.convert("RGB")))
+    return int(m[0, c[0]:c[2]].sum()) > limite or int(m[-1, c[0]:c[2]].sum()) > limite
+
+
 def recortar(im, caixa, folga=6):
     x0, y0, x1, y1 = caixa[:4]
     x0, y0 = max(0, x0 - folga), max(0, y0 - folga)
@@ -133,10 +158,13 @@ def folhas():
     for folha, alvos in FOLHAS.items():
         im = Image.open(ORIG / f"{folha}.jpg")
         if folha == "itens_b":   # veio em 2 linhas repetidas: usa só a de baixo (cores mais firmes)
-            im = im.crop((0, int(im.height * 0.47), im.width, im.height))
+            im = so_fileira_de_baixo(im)
         figs = figuras(im)
         if len(figs) != len(alvos):   # nomes casam por posição: contagem errada trocaria as artes
             raise SystemExit(f"{folha}: achei {len(figs)} figuras, esperava {len(alvos)}; ajuste a folha ou o prompt")
+        cortadas = [n for (n, _), c in zip(alvos, figs) if cortada(im, c)]
+        if cortadas:   # figura encostada na borda = decepada pelo recorte (ex.: flechas do itens_b)
+            raise SystemExit(f"{folha}: figuras cortadas na borda: {cortadas}")
         for alvo, cx in zip(alvos, figs):
             if alvo is None:   # figura pulada (ex.: 1ª linha repetida de itens_b)
                 continue
@@ -162,17 +190,79 @@ def folhas():
     for x in range(5, 30, 6):
         d.line([(x, 6), (x, 31)], fill=(120, 110, 90, 255), width=2)
     fechada.save(HD / "porta_fechada.png")
+    for arq in sorted(HD.glob("porta_*.png")):
+        if not arq.stem.endswith("_larga"):
+            larga(Image.open(arq).convert("RGBA"), arq.stem == "porta_fechada").save(HD / f"{arq.stem}_larga.png")
+
+
+def larga(porta, grades=False):
+    """Porta de 2 tiles (cima/baixo): bordas da porta + o meio esticado (um arco largo, não 2 portas)."""
+    out = Image.new("RGBA", (64, 32), (0, 0, 0, 0))
+    out.alpha_composite(porta.crop((0, 0, 12, 32)), (0, 0))
+    out.alpha_composite(porta.crop((20, 0, 32, 32)), (52, 0))
+    out.alpha_composite(porta.crop((12, 0, 20, 32)).resize((40, 32), Image.NEAREST), (12, 0))
+    if grades:   # refaz as grades finas (esticar engrossaria)
+        base = larga(Image.open(HD / "porta_combate.png").convert("RGBA"))
+        d = ImageDraw.Draw(base)
+        for x in range(5, 62, 6):
+            d.line([(x, 6), (x, 31)], fill=(120, 110, 90, 255), width=2)
+        return base
+    return out
+
+
+def passos(q, lado):
+    """Parado + 2 passos a partir de 1 vista. Frente/costas: levanta uma perna de cada vez;
+    de lado: abre a passada e depois levanta a perna da frente. O tronco desce 1 px no passo."""
+    a = np.asarray(q).copy()
+    h, w = a.shape[:2]
+    y0 = int(h * 0.74)   # faixa das pernas
+    meio = w // 2
+
+    def levantar(img, x0, x1, dy=2):
+        faixa = img[y0:, x0:x1].copy()
+        img[y0:, x0:x1] = 0
+        img[y0 - dy:h - dy, x0:x1] = np.where(faixa[..., 3:] > 0, faixa, img[y0 - dy:h - dy, x0:x1])
+
+    def deslocar(img, x0, x1, dx):
+        faixa = img[y0:, x0:x1].copy()
+        img[y0:, x0:x1] = 0
+        n0, n1 = max(0, x0 + dx), min(w, x1 + dx)
+        src = faixa[:, n0 - (x0 + dx):faixa.shape[1] - ((x1 + dx) - n1)]
+        img[y0:, n0:n1] = np.where(src[..., 3:] > 0, src, img[y0:, n0:n1])
+
+    def tronco_desce(img):
+        cima = img[:y0].copy()
+        img[1:y0 + 1] = np.where(cima[..., 3:] > 0, cima, img[1:y0 + 1])
+        img[0] = 0
+
+    pa, pb = a.copy(), a.copy()
+    if lado:
+        deslocar(pa, 0, meio, -2)
+        deslocar(pa, meio, w, 2)
+        levantar(pb, meio, w) if lado > 0 else levantar(pb, 0, meio)
+    else:
+        levantar(pa, 0, meio)
+        levantar(pb, meio, w)
+    tronco_desce(pa)
+    tronco_desce(pb)
+    return [q, Image.fromarray(pa), Image.fromarray(pb)]
 
 
 def herois():
+    """Folha de 12 quadros: (baixo, direita, cima, esquerda) x (parado, passo A, passo B)."""
     for arq, nome in HEROIS.items():
         im = Image.open(ORIG / f"{arq}.jpg")
         figs = figuras(im)[:4]
-        quadros = [contorno(reduzir(recortar(im, c), ALTURA_HEROI)) for c in figs]
-        larg = max(q.width for q in quadros) + 2
-        folha = Image.new("RGBA", (larg * 4, ALTURA_HEROI + 2), (0, 0, 0, 0))
+        vistas = [contorno(reduzir(recortar(im, c), ALTURA_HEROI)) for c in figs]
+        larg = max(v.width for v in vistas) + 6
+        alt = ALTURA_HEROI + 2
+        quadros = []
+        for i, v in enumerate(vistas):
+            q = quadro(v, larg, alt)
+            quadros += passos(q, {1: 1, 3: -1}.get(i, 0))
+        folha = Image.new("RGBA", (larg * 12, alt), (0, 0, 0, 0))
         for i, q in enumerate(quadros):
-            folha.alpha_composite(quadro(q, larg, ALTURA_HEROI + 2), (i * larg, 0))
+            folha.alpha_composite(q, (i * larg, 0))
         folha.save(HD / f"{nome}.png")
 
 

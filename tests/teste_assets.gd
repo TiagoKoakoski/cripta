@@ -54,8 +54,16 @@ func _initialize() -> void:
 		if img == null:
 			falhou += 1
 			push_error("FALHOU arte HD %s" % n)
-		elif n in ["heroi", "espadachim", "alquimista", "cacador"] and img.get_width() % 4 != 0:
+		elif n in ["heroi", "espadachim", "alquimista", "cacador"] and img.get_width() % 12 != 0:
 			falhou += 1
-			push_error("FALHOU %s: 4 quadros" % n)
+			push_error("FALHOU %s: 12 quadros (4 direções x parado/passo/passo)" % n)
+	# portas largas (cima/baixo, 2 tiles): clássico 32x16, detalhado 64x32
+	for n: String in ["porta_combate", "porta_tesouro", "porta_fonte", "porta_subchefe", "porta_chefe",
+			"porta_chefe_trancada", "porta_inicio", "porta_fechada"]:
+		var c := Image.load_from_file("res://arte/%s_larga.png" % n)
+		var h := Image.load_from_file("res://arte/hd/%s_larga.png" % n)
+		if c == null or c.get_size() != Vector2i(32, 16) or h == null or h.get_size() != Vector2i(64, 32):
+			falhou += 1
+			push_error("FALHOU porta larga %s" % n)
 	print("Resultado: %d falhas" % falhou)
 	quit(1 if falhou > 0 else 0)

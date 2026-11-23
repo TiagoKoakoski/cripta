@@ -465,6 +465,13 @@ def main():
     for tipo in ESTILO_PORTA:
         salvar(porta_tipo(tipo), f"porta_{tipo}")
     salvar(porta_tipo("chefe", True), "porta_chefe_trancada")
+    # portas de cima/baixo ocupam 2 tiles: 1 imagem larga (no clássico, os 2 tiles lado a lado)
+    for nome in [f"porta_{t}" for t in ESTILO_PORTA] + ["porta_chefe_trancada", "porta_fechada"]:
+        tile = Image.open(ARTE / f"{nome}.png")
+        larga = Image.new("RGBA", (32, 16), (0, 0, 0, 0))
+        larga.paste(tile, (0, 0))
+        larga.paste(tile, (16, 0))
+        salvar(larga, f"{nome}_larga")
     salvar(tela_texto("CRIPTA", 4, "#e0b040"), "titulo")
     salvar(tela_texto("FIM", 4, "#d43a4a"), "texto_fim")
     salvar(tela_texto("VITORIA", 4, "#e0b040"), "texto_vitoria")
