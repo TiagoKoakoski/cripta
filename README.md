@@ -25,6 +25,14 @@ O recorde fica salvo por personagem.
 | Atirar (4 direções, segurar = rajada) | setas | analógico direito / Y A X B |
 | Escolher personagem (título) | ← → ou A D | analógico / direcional |
 | Começar | Enter, espaço, ↑ ou ↓ | qualquer botão |
+| Pausar (menu) | Esc ou P | Start |
+
+- **Menu de pausa:** Continuar, **Visual** (Clássico ou Detalhado; vale na hora e fica salvo),
+  Controles, Voltar ao título e Sair do jogo.
+- **Visual Detalhado** (padrão): arte gerada por IA e reduzida para pixel art, com tela interna de
+  640x360. O **Clássico** usa os sprites de 16 px desenhados à mão.
+- **Salas:** 14 desenhos com pilares, pedras, **caixas** (quebram com 2 acertos, às vezes dão
+  coração), **buracos** (quem anda não passa; tiros e voadores passam por cima) e **espinhos** (ferem).
 
 - **Personagens** (escolhidos no título; os itens de tiro se adaptam a cada um, e o anúncio do item diz o efeito):
   - **Iara, a Atiradora:** 3 corações, atira a luz do farol.
@@ -92,7 +100,8 @@ godot --path . -- --autoplay --capturas=build/fotos --forte   # robô joga os 3 
 #   opções: --personagem=espadachim  --chefe=lich (força o chefe de todo andar)
 godot --path . --script res://ferramentas/fotos_chefes.gd      # foto de cada chefe em build/chefes
 V=~/Projetos/jogos/_ferramentas/venv/bin/python
-$V ferramentas/gerar_arte.py && $V ferramentas/gerar_sons.py  # regenera arte e sons
+$V ferramentas/gerar_arte.py && $V ferramentas/gerar_sons.py  # regenera arte clássica e sons
+ferramentas/arte_ia/gerar.sh && $V ferramentas/arte_ia/pixelizar.py  # arte detalhada (Nano Banana)
 ```
 
 - `scripts/logica/`: regras puras, testadas sem cena.
@@ -104,5 +113,11 @@ $V ferramentas/gerar_arte.py && $V ferramentas/gerar_sons.py  # regenera arte e 
   - `jogador.gd`, `inimigo.gd`, `tiro.gd`, `main.gd`.
   - `robo.gd`: o modo `--autoplay`.
 - `tests/`: assets, andar, partida, sala (física e entrada simulada), navegação e fluxo do jogo.
-- Arte e sons 100% próprios. Os desenhos vêm da versão Game Boy, recoloridos por
-  `ferramentas/gerar_arte.py`, e os sons são sintetizados por `ferramentas/gerar_sons.py`.
+- **Arte:**
+  - **Clássico:** desenhos da versão Game Boy, recoloridos por `ferramentas/gerar_arte.py`.
+  - **Detalhado:** gerado com o Nano Banana (Gemini).
+    - `ferramentas/arte_ia/prompts.json` guarda os pedidos.
+    - `gerar.sh` gera o que falta em `originais/` (JPEG).
+    - `pixelizar.py` recorta as figuras do fundo magenta, reduz para pixel art 2x e salva em `arte/hd/`.
+  - **No código:** todo sprite passa por `Visual.aplicar(sprite, nome)` (`scripts/visual.gd`).
+- **Sons:** sintetizados por `ferramentas/gerar_sons.py`.
