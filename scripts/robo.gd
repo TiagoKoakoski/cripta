@@ -47,7 +47,7 @@ func _foto(nome: String) -> void:
 
 func _physics_process(delta: float) -> void:
 	_t_total += delta
-	if _t_total > 900.0:
+	if _t_total > 1500.0:
 		print("robô: tempo esgotado")
 		get_tree().quit(1)
 		return
