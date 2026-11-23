@@ -39,11 +39,22 @@ static func configurar() -> void:
 		var t := InputEventKey.new()
 		t.physical_keycode = k
 		InputMap.action_add_event("confirmar", t)
-	for b: JoyButton in [JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_X, JOY_BUTTON_Y, JOY_BUTTON_START]:
+	for b: JoyButton in [JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_X, JOY_BUTTON_Y]:
 		var e := InputEventJoypadButton.new()
 		e.device = -1
 		e.button_index = b
 		InputMap.action_add_event("confirmar", e)
+
+
+	_limpar("pausar")
+	for k: Key in [KEY_ESCAPE, KEY_P]:
+		var t2 := InputEventKey.new()
+		t2.physical_keycode = k
+		InputMap.action_add_event("pausar", t2)
+	var st := InputEventJoypadButton.new()
+	st.device = -1
+	st.button_index = JOY_BUTTON_START
+	InputMap.action_add_event("pausar", st)
 
 
 static func _limpar(acao: String) -> void:

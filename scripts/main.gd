@@ -41,14 +41,52 @@ func arquivo_para(args: PackedStringArray) -> String:
 	return "user://progresso_robo.cfg" if args.has("--autoplay") else "user://progresso.cfg"
 
 
-func _unhandled_input(evento: InputEvent) -> void:
-	if evento is InputEventKey and (evento as InputEventKey).pressed \
-			and (evento as InputEventKey).physical_keycode == KEY_ESCAPE:
-		get_tree().quit()
+var pausado := false
+var _menu: MenuPausa
+
+
+func menu_pausa() -> MenuPausa:
+	return _menu if _menu and is_instance_valid(_menu) else null
+
+
+## Start/Esc/P: só durante o jogo (não na história, transição, morte ou telas)
+func pausar() -> void:
+	if estado != "jogando" or pausado:
+		return
+	pausado = true
+	get_tree().paused = true
+	_menu = MenuPausa.new()
+	add_child(_menu)
+	_menu.escolheu.connect(_menu_escolheu)
+
+
+func despausar() -> void:
+	pausado = false
+	get_tree().paused = false
+	if menu_pausa():
+		_menu.queue_free()
+	_menu = null
+
+
+func _menu_escolheu(opcao: String) -> void:
+	match opcao:
+		"continuar":
+			despausar()
+		"titulo":
+			despausar()
+			if andar:
+				andar.queue_free()
+				andar = null
+			_mostrar_tela("titulo")
+		"sair":
+			get_tree().quit()
 
 
 func _process(delta: float) -> void:
 	_espera = maxf(0.0, _espera - delta)
+	if estado == "jogando" and not pausado and Input.is_action_just_pressed("pausar"):
+		pausar()
+		return
 	if estado in ["historia", "transicao", "final"]:
 		if _cartao and is_instance_valid(_cartao):
 			for a: String in ["confirmar", "atirar_cima", "atirar_baixo", "atirar_esquerda", "atirar_direita"]:
