@@ -6,3 +6,4 @@ export_presets.cfg
 .superpowers/
 __pycache__/
 build/
+ferramentas/arte_ia/gerar.log

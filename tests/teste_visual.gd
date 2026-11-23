@@ -12,8 +12,8 @@ func _initialize() -> void:
 
 
 func _rodar() -> void:
+	Visual.arquivo = "user://teste_config.cfg"   # direto na classe (não via variável)
 	var v := Visual
-	v.arquivo = "user://teste_config.cfg"
 	# uma imagem HD de teste (2x do clássico "sombra", 4 quadros)
 	var img := Image.create(32 * 4, 32, false, Image.FORMAT_RGBA8)
 	img.fill(Color.WHITE)
@@ -30,8 +30,8 @@ func _rodar() -> void:
 	root.add_child(t)
 	# nome sem HD: no detalhado continua o clássico
 	v.definir_modo("detalhado")
-	v.aplicar(t, "tocha", 2.0, 2)
-	checa(t.texture.resource_path.ends_with("arte/tocha.png") and t.scale == Vector2(2, 2) and t.hframes == 2,
+	v.aplicar(t, "brilho", 2.0, 2)
+	checa(t.texture.resource_path.ends_with("arte/brilho.png") and t.scale == Vector2(2, 2) and t.hframes == 2,
 		"detalhado sem arte HD: cai no clássico")
 	# com HD: escala pela metade e quadros do HD
 	var u := Sprite2D.new()
