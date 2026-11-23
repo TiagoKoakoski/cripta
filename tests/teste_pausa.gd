@@ -41,9 +41,7 @@ func _rodar() -> void:
 	root.add_child(main)
 	await frames(50)
 	await apertar("pausar")
-	checa(not main.pausado and main.estado == "titulo", "no título o Start não pausa")
-	await apertar("confirmar", 50)
-	checa(main.estado == "historia", "história (estado %s)" % main.estado)
+	checa(not main.pausado and main.estado == "historia", "no título o Start começa (como confirmar), sem pausar")
 	await apertar("pausar")
 	checa(not main.pausado, "na história o Start não pausa")
 	while main.estado == "historia":
@@ -81,6 +79,15 @@ func _rodar() -> void:
 	await apertar("pausar")
 	await apertar("pausar")
 	checa(not main.pausado, "Start no menu volta ao jogo")
+	# botão A do controle = atirar_baixo + confirmar ao mesmo tempo: tem que confirmar, não descer
+	await apertar("pausar")
+	Input.action_press("atirar_baixo")
+	Input.action_press("confirmar")
+	await frames(3)
+	Input.action_release("atirar_baixo")
+	Input.action_release("confirmar")
+	await frames(10)
+	checa(not main.pausado, "A do controle confirma Continuar (não desce no menu)")
 	# Voltar ao título
 	await apertar("pausar")
 	for k in 3:

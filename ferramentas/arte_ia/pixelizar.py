@@ -135,8 +135,8 @@ def folhas():
         if folha == "itens_b":   # veio em 2 linhas repetidas: usa só a de baixo (cores mais firmes)
             im = im.crop((0, int(im.height * 0.47), im.width, im.height))
         figs = figuras(im)
-        if len(figs) < len(alvos):
-            print(f"!! {folha}: achei {len(figs)} figuras, esperava {len(alvos)}")
+        if len(figs) != len(alvos):   # nomes casam por posição: contagem errada trocaria as artes
+            raise SystemExit(f"{folha}: achei {len(figs)} figuras, esperava {len(alvos)}; ajuste a folha ou o prompt")
         for alvo, cx in zip(alvos, figs):
             if alvo is None:   # figura pulada (ex.: 1ª linha repetida de itens_b)
                 continue

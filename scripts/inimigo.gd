@@ -148,6 +148,8 @@ func _physics_process(delta: float) -> void:
 	_sprite.frame = int(_anim * 5.0) % _sprite.hframes
 	if _sprite.hframes == 1:   # detalhado: 1 quadro, respira
 		_sprite.offset.y = sin(_anim * 6.0) * 1.5
+	else:
+		_sprite.offset.y = 0.0
 	_flash = maxf(0.0, _flash - delta)
 	lento = maxf(0.0, lento - delta)
 	if _flash > 0.0:

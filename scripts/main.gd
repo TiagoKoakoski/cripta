@@ -94,7 +94,7 @@ func _process(delta: float) -> void:
 		return
 	if estado in ["historia", "transicao", "final"]:
 		if _cartao and is_instance_valid(_cartao):
-			for a: String in ["confirmar", "atirar_cima", "atirar_baixo", "atirar_esquerda", "atirar_direita"]:
+			for a: String in ["confirmar", "pausar", "atirar_cima", "atirar_baixo", "atirar_esquerda", "atirar_direita"]:
 				if Input.is_action_just_pressed(a) or (Input.is_action_pressed(a) and _robo):
 					_cartao.avancar()
 					break
@@ -109,13 +109,13 @@ func _process(delta: float) -> void:
 				selecionado = posmod(selecionado + passo, Partida.PERSONAGENS.size())
 				_mostrar_tela("titulo", false)
 				return
-		for a: String in ["confirmar", "atirar_cima", "atirar_baixo"]:
+		for a: String in ["confirmar", "pausar", "atirar_cima", "atirar_baixo"]:
 			if Input.is_action_just_pressed(a) or (Input.is_action_pressed(a) and _robo):
 				_abertura()
 				return
 		return
 	# fim / vitória: qualquer botão volta ao título
-	for a: String in ["confirmar", "atirar_cima", "atirar_baixo", "atirar_esquerda", "atirar_direita"]:
+	for a: String in ["confirmar", "pausar", "atirar_cima", "atirar_baixo", "atirar_esquerda", "atirar_direita"]:
 		if Input.is_action_just_pressed(a) or (Input.is_action_pressed(a) and _robo):
 			_mostrar_tela("titulo")
 			return

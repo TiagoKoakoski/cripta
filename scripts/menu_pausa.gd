@@ -86,13 +86,8 @@ func _process(_d: float) -> void:
 	if _apertou(["pausar"]):
 		escolheu.emit("continuar")
 		return
-	if _apertou(["mover_cima", "atirar_cima"]):
-		_i = posmod(_i - 1, OPCOES.size())
-		_atualizar()
-	elif _apertou(["mover_baixo", "atirar_baixo"]):
-		_i = posmod(_i + 1, OPCOES.size())
-		_atualizar()
-	elif _apertou(["confirmar"]):
+	# confirmar vem antes da navegação: o A do controle é confirmar e também "atirar para baixo"
+	if _apertou(["confirmar"]):
 		match OPCOES[_i]:
 			"visual":
 				Visual.alternar()
@@ -102,3 +97,9 @@ func _process(_d: float) -> void:
 				_atualizar()
 			_:
 				escolheu.emit(OPCOES[_i])
+	elif _apertou(["mover_cima", "atirar_cima"]):
+		_i = posmod(_i - 1, OPCOES.size())
+		_atualizar()
+	elif _apertou(["mover_baixo", "atirar_baixo"]):
+		_i = posmod(_i + 1, OPCOES.size())
+		_atualizar()
