@@ -183,6 +183,14 @@ func teste_hud() -> void:
 	a.partida.vida_max = 5
 	await frames(2)
 	checa(a.hud.coracoes_visiveis() == [2, 5], "HUD mostra 2 cheios de 5 (%s)" % [a.hud.coracoes_visiveis()])
+	a.partida.vida_max = 6
+	a.partida.ganhar_alma(3)
+	await frames(2)
+	checa(a.hud.almas_visiveis() == 3, "HUD mostra 3 corações de alma (%d)" % a.hud.almas_visiveis())
+	var c6: Sprite2D = a.hud._coracoes[6]   # 7º coração: começa a 2ª fileira, embaixo do 1º
+	checa(c6.visible and c6.texture.resource_path.contains("coracao_alma")
+		and is_equal_approx(c6.position.x, a.hud._coracoes[0].position.x) and c6.position.y > a.hud._coracoes[0].position.y,
+		"alma depois dos vermelhos, em 2 fileiras de 6")
 	await fim(a)
 
 

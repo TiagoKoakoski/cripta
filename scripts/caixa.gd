@@ -39,8 +39,9 @@ func levar_dano(n: int) -> void:
 	if hp <= 0:
 		remove_from_group("caixa")
 		Efeitos.morte(get_parent(), position, Color(0.7, 0.5, 0.3))
-		if sala and sala.has_method("coracao_solto") and randf() < 0.1:
-			sala.coracao_solto(position)
+		var sorte := randf()
+		if sala and sala.has_method("coracao_solto") and sorte < 0.14:   # 10% vermelho, 4% de alma
+			sala.coracao_solto(position, sorte >= 0.10)
 		queue_free()
 
 

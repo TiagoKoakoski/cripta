@@ -147,6 +147,14 @@ def quadro(im, larg, alt):
     return tela
 
 
+def azul(im):
+    """Troca vermelho por azul (R<->B) e clareia o verde: vermelho vira azul-alma."""
+    a = np.asarray(im).astype(float)
+    r, g, b = a[..., 0].copy(), a[..., 1].copy(), a[..., 2].copy()
+    a[..., 0], a[..., 1], a[..., 2] = b, np.clip(g + r * 0.35, 0, 255), r
+    return Image.fromarray(a.astype(np.uint8))
+
+
 def tingir(im, mult):
     a = np.asarray(im).astype(float)
     for c in range(3):
@@ -183,6 +191,9 @@ def folhas():
             peq.save(HD / f"{nome}.png")
     # extras derivados
     Image.open(HD / "coracao_chao.png").save(HD / "coracao.png")
+    alma = azul(Image.open(HD / "coracao_chao.png").convert("RGBA"))   # coração de alma: o vermelho em azul
+    alma.save(HD / "coracao_alma.png")
+    alma.save(HD / "coracao_alma_chao.png")
     combate = Image.open(HD / "porta_combate.png")
     tingir(combate, (0.8, 0.8, 0.9)).save(HD / "porta_inicio.png")
     fechada = combate.copy()

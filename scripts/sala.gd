@@ -184,6 +184,16 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 		_soltar_coracao()
 
 
+func _ponto_livre_perto(alvo: Vector2) -> Vector2:
+	var melhor := alvo
+	var d := INF
+	for p: Vector2 in pontos_livres():
+		if p.distance_to(alvo) < d and p.distance_to(Vector2(160, 88)) > 12.0:   # não em cima da chave
+			d = p.distance_to(alvo)
+			melhor = p
+	return melhor
+
+
 ## pontos de chão sem obstáculo (o mago teletransporta para um deles)
 func pontos_livres() -> Array[Vector2]:
 	var out: Array[Vector2] = []
@@ -294,6 +304,7 @@ func _verificar_limpa() -> void:
 		if tipo == GeradorAndar.SUBCHEFE:
 			_soltar_chave()
 			chave_caiu.emit()
+			coracao_solto(_ponto_livre_perto(Vector2(184, 88)), true)   # subchefe sempre deixa um coração de alma
 		if _tem_coracao:
 			_soltar_coracao.call_deferred()
 
@@ -456,10 +467,15 @@ func _physics_process(_delta: float) -> void:
 				(corpo as Jogador).ferir()
 	for n: Node in get_tree().get_nodes_in_group("coracao_solto"):
 		var a := n as Area2D
-		if a.get_parent() == self and partida.vida < partida.vida_max:
+		var alma: bool = a.get_meta("alma", false)
+		if a.get_parent() == self and (partida.cabe_alma() if alma else partida.vida < partida.vida_max):
 			for corpo: Node in a.get_overlapping_bodies():
 				if corpo is Jogador:
-					partida.curar(1)
+					if alma:
+						partida.ganhar_alma(1)
+						Efeitos.faisca(self, a.position, Color(0.5, 0.7, 1.0))
+					else:
+						partida.curar(1)
 					Sons.tocar("fonte")
 					a.queue_free()
 					a.remove_from_group("coracao_solto")
@@ -558,21 +574,25 @@ func caixas() -> int:
 	return get_children().filter(func(n: Node) -> bool: return n is Caixa and n.is_in_group("caixa")).size()
 
 
-## coração que cai de uma caixa (cura 1 se faltar vida)
-func coracao_solto(pos: Vector2) -> void:
+## coração que cai (caixa, subchefe): vermelho cura 1 se faltar vida; de alma (azul) dá +1 alma se couber
+func coracao_solto(pos: Vector2, alma := false) -> void:
 	var a := Area2D.new()
 	a.position = pos
 	a.collision_layer = 0
 	a.collision_mask = Camadas.JOGADOR
 	var s := Sprite2D.new()
-	Visual.aplicar(s, "coracao_chao")
+	Visual.aplicar(s, "coracao_alma_chao" if alma else "coracao_chao")
 	a.add_child(s)
+	a.set_meta("alma", alma)
 	var c := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
 	r.size = Vector2(12, 12)
 	c.shape = r
 	a.add_child(c)
 	a.add_to_group("coracao_solto")
+	var tw := s.create_tween().set_loops()
+	tw.tween_property(s, "position:y", -2.0, 0.4)
+	tw.tween_property(s, "position:y", 0.0, 0.4)
 	add_child.call_deferred(a)
 
 

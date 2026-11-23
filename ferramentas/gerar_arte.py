@@ -404,6 +404,8 @@ def main():
     salvar(pintar([N.MAGO, N.MAGO_2], PALETAS["mago"]), "mago")
     salvar(pintar([N.TOCHA, N.TOCHA_2], PALETAS["tocha"]), "tocha")
     salvar(pintar([h.CORACAO_CHEIO], PALETAS["coracao"]), "coracao_chao")
+    for nome in ("coracao_alma", "coracao_alma_chao"):   # coração de alma (azul, temporário)
+        salvar(pintar([h.CORACAO_CHEIO], ("#b8dcff", "#3a6ad4")), nome)
     itens = {"espada": h.ITEM_FORTE, "raio": h.ITEM_GATILHO, "coracao_extra": h.ITEM_CORACAO,
              "botas": h.ITEM_BOTAS, "tiro_triplo": TRIPLO, "alcance": ALCANCE,
              "ricochete": N.ITEM_RICOCHETE, "perfurante": N.ITEM_PERFURANTE, "teleguiado": N.ITEM_TELEGUIADO,

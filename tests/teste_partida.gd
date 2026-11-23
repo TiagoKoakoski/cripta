@@ -7,7 +7,8 @@ var falhou := 0
 
 func _initialize() -> void:
 	for t: String in ["teste_inicio", "teste_dano_e_invencibilidade", "teste_morte", "teste_cura_limite",
-			"teste_itens", "teste_itens_de_tiro", "teste_itens_sem_repetir", "teste_recomeco_zera", "teste_recorde", "teste_subir"]:
+			"teste_itens", "teste_itens_de_tiro", "teste_itens_sem_repetir", "teste_recomeco_zera", "teste_recorde", "teste_subir",
+			"teste_coracao_de_alma"]:
 		if call(t) != true:
 			falhou += 1
 			push_error("FALHOU %s: não terminou" % t)
@@ -165,4 +166,30 @@ func teste_subir() -> bool:
 	igual(p.pontos(), 300 + 3, "vencer conclui o 3º andar")
 	p.comecar(9)
 	igual([p.andar_atual, p.andares_concluidos, p.salas_total], [1, 0, 0], "recomeço volta ao andar 1")
+	return true
+
+
+## coração de alma (azul, temporário): fica depois dos vermelhos, apanha primeiro, não volta com cura
+func teste_coracao_de_alma() -> bool:
+	var p := nova()
+	igual(p.almas, 0, "começa sem alma")
+	p.ganhar_alma(2)
+	igual([p.vida, p.almas], [3, 2], "+2 almas além da vida")
+	p.levar_dano()
+	igual([p.vida, p.almas], [3, 1], "dano tira a alma primeiro")
+	p.invencivel = 0.0
+	p.levar_dano()
+	p.invencivel = 0.0
+	p.levar_dano()
+	igual([p.vida, p.almas], [2, 0], "sem alma, tira o vermelho")
+	p.curar(5)
+	igual([p.vida, p.almas], [3, 0], "cura não devolve alma")
+	p.ganhar_alma(20)
+	igual(p.vida_max + p.almas, Partida.CORACOES_MAX, "vermelhos + almas no máximo %d" % Partida.CORACOES_MAX)
+	for i in 6:
+		p.pegar_item("coracao_extra")
+	igual(p.vida_max + p.almas <= Partida.CORACOES_MAX and p.vida_max == Partida.VIDA_MAXIMA, true,
+		"coração extra empurra a alma para fora, sem passar do máximo")
+	p.comecar(2)
+	igual(p.almas, 0, "partida nova zera almas")
 	return true

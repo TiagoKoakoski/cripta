@@ -12,11 +12,13 @@ const BASE := {"atirador": [3, 70.0, 1, 0.4], "espadachim": [4, 80.0, 2, 0.45], 
 const VERSAO_SAVE := 3
 const VIDA_INICIAL := 3
 const VIDA_MAXIMA := 8
+const CORACOES_MAX := 12   # vermelhos + almas (2 fileiras de 6 no HUD)
 const INVENCIBILIDADE := 1.0
 const VELOCIDADE := 70.0
 
 var vida := VIDA_INICIAL
 var vida_max := VIDA_INICIAL
+var almas := 0   # corações de alma (azuis): temporários, apanham primeiro e a cura não devolve
 var dano := 1
 var cadencia := 0.4        # segundos entre tiros
 var velocidade := VELOCIDADE  # px/s
@@ -51,6 +53,7 @@ func comecar(nova_semente: int, quem := "atirador") -> void:
 	var b: Array = BASE[personagem]
 	vida = b[0]
 	vida_max = b[0]
+	almas = 0
 	velocidade = b[1]
 	dano = b[2]
 	cadencia = b[3]
@@ -79,7 +82,10 @@ func avancar(dt: float) -> void:
 func levar_dano() -> bool:
 	if invencivel > 0.0 or morto() or venceu:
 		return false
-	vida -= 1
+	if almas > 0:
+		almas -= 1
+	else:
+		vida -= 1
 	invencivel = INVENCIBILIDADE
 	return true
 
@@ -90,6 +96,14 @@ func morto() -> bool:
 
 func curar(n: int) -> void:
 	vida = mini(vida_max, vida + n)
+
+
+func ganhar_alma(n: int) -> void:
+	almas = clampi(almas + n, 0, CORACOES_MAX - vida_max)
+
+
+func cabe_alma() -> bool:
+	return vida_max + almas < CORACOES_MAX
 
 
 func sortear_item(excluir: Array = []) -> String:
@@ -112,6 +126,7 @@ func pegar_item(item: String) -> void:
 		"coracao_extra":
 			vida_max = mini(VIDA_MAXIMA, vida_max + 1)
 			curar(1)
+			ganhar_alma(0)   # sem espaço, a alma do fim sai
 		"botas":
 			velocidade *= 1.3
 		"tiro_triplo":

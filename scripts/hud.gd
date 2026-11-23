@@ -56,10 +56,10 @@ func _init(p: Partida, a: Node) -> void:
 	partida = p
 	andar = a
 	layer = 10
-	for i in Partida.VIDA_MAXIMA:
+	for i in Partida.CORACOES_MAX:   # vermelhos e depois os de alma, em fileiras de 6
 		var s := Sprite2D.new()
 		Visual.aplicar(s, "coracao", 2.0, 2)
-		s.position = Vector2(20 + i * 22, 12)
+		s.position = Vector2(20 + (i % 6) * 22, 12 + (i / 6) * 20)
 		add_child(s)
 		_coracoes.append(s)
 	_icones = Node2D.new()
@@ -164,13 +164,23 @@ func _process(d: float) -> void:
 		if _aviso_t <= 0.0:
 			_aviso.visible = false
 	for i in _coracoes.size():
-		_coracoes[i].visible = i < partida.vida_max
-		var cheio := i < partida.vida
-		_coracoes[i].frame = (0 if cheio else 1) % _coracoes[i].hframes
-		_coracoes[i].modulate = Color.WHITE if cheio or _coracoes[i].hframes > 1 else Color(0.3, 0.25, 0.3)
+		var c := _coracoes[i]
+		var alma := i >= partida.vida_max
+		c.visible = i < partida.vida_max + partida.almas
+		var nome := "coracao_alma" if alma else "coracao"
+		if c.get_meta("visual_nome", "") != nome:
+			Visual.aplicar(c, nome, 2.0, 1 if alma else 2)
+		var cheio := alma or i < partida.vida
+		c.frame = (0 if cheio else 1) % c.hframes
+		c.modulate = Color.WHITE if cheio or c.hframes > 1 else Color(0.3, 0.25, 0.3)
 	_mapa.queue_redraw()
 	_barra.queue_redraw()
 	_icone_chave.visible = partida.tem_chave
+
+
+func almas_visiveis() -> int:
+	return _coracoes.filter(func(c: Sprite2D) -> bool:
+		return c.visible and c.get_meta("visual_nome", "") == "coracao_alma").size()
 
 
 ## [cheios, total] visíveis

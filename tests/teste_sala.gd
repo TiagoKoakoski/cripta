@@ -16,7 +16,8 @@ func _rodar() -> void:
 			"teste_invencibilidade", "teste_slime_divide_e_sala_abre", "teste_spawn_longe_da_porta",
 			"teste_parede_segura", "teste_quatro_morcegos_limpam", "teste_porta_trancada",
 			"teste_montar_durante_fisica_tranca",
-			"teste_inimigo_morto_nao_fere", "teste_coracao_ao_limpar", "teste_coracao_vida_cheia", "teste_tremor", "teste_pontos_sem_pilar", "teste_portas_por_tipo"]:
+			"teste_inimigo_morto_nao_fere", "teste_coracao_ao_limpar", "teste_coracao_vida_cheia", "teste_tremor", "teste_pontos_sem_pilar", "teste_portas_por_tipo",
+			"teste_coracao_de_alma_no_chao"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -302,3 +303,30 @@ func teste_portas_por_tipo() -> void:
 	var lado := sala.sprites_porta(Vector2i.LEFT)
 	checa(lado.size() == 1 and lado[0].texture.resource_path.ends_with("porta_fonte.png"), "porta do lado: 1 sprite normal")
 	await desmontar(sala)
+
+
+## coração de alma solto: pega mesmo de vida cheia; subchefe sempre deixa um
+func teste_coracao_de_alma_no_chao() -> void:
+	var sala := sala_com_coracao(3)
+	var partida := sala.partida
+	sala.coracao_solto(sala.jogador.position, true)
+	for i in 4:
+		await physics_frame
+	checa(partida.almas == 1 and partida.vida == partida.vida_max, "vida cheia: pegou a alma (%d)" % partida.almas)
+	await desmontar(sala)
+	var p2 := Partida.new()
+	p2.arquivo_recorde = "user://teste_recorde.cfg"
+	p2.comecar(1)
+	var s2 := Sala.new()
+	root.add_child(s2)
+	s2.configurar({"tipo": GeradorAndar.SUBCHEFE, "portas": {}, "layout": 0, "limpa": false, "entrada": Vector2i.ZERO,
+		"subchefe": "sub_morcego_vampiro", "chave": true}, p2)
+	for i in 120:   # espera surgir e derruba (fase a fase) até a sala abrir
+		for e: Variant in s2._inimigos.duplicate():
+			if is_instance_valid(e) and (e as Inimigo).vivo() and not (e as Inimigo).surgindo():
+				(e as Inimigo).levar_tiro(999)
+		await physics_frame
+	var almas_no_chao := get_nodes_in_group("coracao_solto").filter(
+		func(n: Node) -> bool: return n.get_meta("alma", false) and n.get_parent() == s2).size()
+	checa(almas_no_chao == 1, "subchefe derrotado deixa 1 coração de alma (%d)" % almas_no_chao)
+	await desmontar(s2)
