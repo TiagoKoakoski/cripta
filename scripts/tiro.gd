@@ -17,8 +17,8 @@ var perfura := false
 var guiado := false
 var explode := false
 var gelo := false
-var vira_poca := false
-var guiado_jogador: Node2D   # tiro inimigo que persegue o jogador (cabeça do Cavaleiro)   # teia da Aranha Rainha: ao acabar vira PocaTeia
+var vira_poca := false       # teia da Aranha Rainha: ao acabar vira PocaTeia
+var guiado_jogador: Node2D   # tiro inimigo que persegue o jogador (cabeça do Cavaleiro)
 var _acertados := {}
 var _imune_parede := 0.0
 var _ultimo_quique: Node

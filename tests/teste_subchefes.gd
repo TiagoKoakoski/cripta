@@ -16,7 +16,7 @@ func _initialize() -> void:
 func _rodar() -> void:
 	for t: String in ["teste_basico", "teste_morcego_mergulhos", "teste_capitao", "teste_tecela_teias",
 			"teste_slime_rei_chave_depois_dos_filhos", "teste_mago_dois_teleportes", "teste_fantasma_some_com_aviso",
-			"teste_chave_cai"]:
+			"teste_chave_cai", "teste_slime_rei_divide_uma_vez"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -208,3 +208,15 @@ func teste_chave_cai() -> void:
 		await frames(10)
 		checa(caiu[0] and sala.chave_no_chao() and sala.vivos() == 0, "%s: morte solta a chave" % nome)
 		await desmontar(sala)
+
+
+func teste_slime_rei_divide_uma_vez() -> void:
+	var sala := montar("slime_rei")
+	await frames(100)
+	var c := sala.chefe()
+	c.hp = 1
+	c.levar_tiro(1)
+	c.levar_tiro(1)   # segundo acerto no mesmo quadro (ex.: duas poças de fogo)
+	await frames(5)
+	checa(vivos_do_tipo(sala, "slime") == 2, "Slime Rei divide uma vez só (%d slimes)" % vivos_do_tipo(sala, "slime"))
+	await desmontar(sala)

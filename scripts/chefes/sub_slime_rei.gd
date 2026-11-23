@@ -23,7 +23,8 @@ func _agir(delta: float) -> void:
 
 func levar_tiro(dano: int, dir := Vector2.ZERO) -> void:
 	var pos := position
+	var estava_vivo := vivo()
 	super(dano, dir)
-	if not vivo():
+	if estava_vivo and not vivo():   # só o golpe que mata divide
 		for d: Vector2 in [Vector2(-14, 0), Vector2(14, 0)]:
 			invocar("slime", pos + d)

@@ -14,7 +14,8 @@ func _initialize() -> void:
 func _rodar() -> void:
 	for t: String in ["teste_vidas", "teste_cavaleiro_investida_avisada", "teste_cavaleiro_cabeca",
 			"teste_cavaleiro_fogo", "teste_verme_tremor", "teste_verme_fase3_duas", "teste_sombra_espelha",
-			"teste_sombra_responde_tiro", "teste_sombra_fase2"]:
+			"teste_sombra_responde_tiro", "teste_sombra_fase2",
+			"teste_sombra_ignora_ataque_falho", "teste_fogo_some_com_chefe"]:
 		await call(t)
 	print("Resultado: %d ok, %d falhas" % [passou, falhou])
 	quit(1 if falhou > 0 else 0)
@@ -33,10 +34,10 @@ func frames(n: int) -> void:
 		await physics_frame
 
 
-func montar(nome: String) -> Sala:
+func montar(nome: String, quem := "atirador") -> Sala:
 	var partida := Partida.new()
 	partida.arquivo_recorde = "user://teste_progresso.cfg"
-	partida.comecar(1)
+	partida.comecar(1, quem)
 	partida.vida = 99
 	partida.vida_max = 8
 	var sala := Sala.new()
@@ -201,4 +202,27 @@ func teste_sombra_fase2() -> void:
 		if is_instance_valid(v) and (v as Inimigo).vivo() and (v as Inimigo).tipo in ["sombra_gemea", "sombra_menor"]:
 			sombras += 1
 	checa(sombras == 2, "Sombra fase 2: duas sombras (%d)" % sombras)
+	await desmontar(sala)
+
+
+func teste_sombra_ignora_ataque_falho() -> void:
+	var sala := montar("sombra_gemea", "cacador")
+	await frames(100)
+	Input.action_press("atirar_direita")   # 1 bumerangue sai; segurar enquanto ele está no ar não lança outro
+	await frames(40)
+	Input.action_release("atirar_direita")
+	var tiros := tiros_inimigos(sala).size()
+	checa(tiros <= 1, "Sombra só responde ao ataque que saiu de verdade (%d tiros)" % tiros)
+	await desmontar(sala)
+
+
+func teste_fogo_some_com_chefe() -> void:
+	var sala := montar("cavaleiro")
+	await frames(100)
+	PocaFogo.criar(sala, Vector2(160, 88), 3.0)
+	await frames(2)
+	sala.chefe().levar_tiro(999)
+	await frames(5)
+	var fogo := sala.get_children().filter(func(n: Node) -> bool: return n is PocaFogo and not (n as PocaFogo).do_jogador and not n.is_queued_for_deletion())
+	checa(fogo.is_empty(), "fogo do chefe some quando ele morre (%d)" % fogo.size())
 	await desmontar(sala)

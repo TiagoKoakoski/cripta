@@ -22,7 +22,8 @@ static func no_arco(origem: Vector2, dir: Vector2, raio: float, angulo_graus: fl
 	return absf(dir.angle_to(d)) <= deg_to_rad(angulo_graus) / 2.0 + 0.02
 
 
-func atacar(j: Jogador, dir: Vector2) -> void:
+## devolve true se o ataque saiu
+func atacar(j: Jogador, dir: Vector2) -> bool:
 	var p := j.partida
 	_golpes += 1
 	if p.perfurante:
@@ -61,3 +62,4 @@ func atacar(j: Jogador, dir: Vector2) -> void:
 		l.modulate = Color(0.85, 0.6, 1.0)
 		j.sala.add_child(l)
 	Sons.tocar("tiro")
+	return true

@@ -16,9 +16,9 @@ var sala: Sala
 var hud: Hud
 var visitadas := {}
 var _cfg := {}   # Vector2i -> dicionário de configuração da sala (fixo para o andar)
-var chefe_forcado := ""
+var chefe_forcado := ""      # --chefe=<nome> e testes; vazio = sorteado da tabela do andar
 var subchefe_forcado := ""
-var subida_externa := false   # --chefe=<nome> e testes; vazio = sorteado da tabela do andar
+var subida_externa := false  # o main faz a transição antes de subir
 var _semente := 0
 
 
@@ -101,6 +101,7 @@ func entrar(pos: Vector2i, entrada: Vector2i) -> void:
 	sala.chave_pega.connect(func() -> void:
 		_cfg[pos]["chave"] = false
 		partida.tem_chave = true
+		sala.destrancar_chefe()
 		Sons.tocar("item")
 		hud.anunciar_texto("CHAVE DA TORRE", "a porta do chefe se abre"))
 	sala.coracao_pego.connect(func() -> void: _cfg[pos]["coracao"] = false)

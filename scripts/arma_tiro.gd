@@ -3,7 +3,8 @@ class_name ArmaTiro
 extends RefCounted
 
 
-func atacar(j: Jogador, dir: Vector2) -> void:
+## devolve true se o ataque saiu
+func atacar(j: Jogador, dir: Vector2) -> bool:
 	var p := j.partida
 	var vel := 240.0 if p.alcance else 180.0
 	var dur := 0.9 if p.alcance else 0.6
@@ -18,3 +19,4 @@ func atacar(j: Jogador, dir: Vector2) -> void:
 		t.aplicar_build(p)
 		j.sala.add_child(t)
 	Sons.tocar("tiro")
+	return true

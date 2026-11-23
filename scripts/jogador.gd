@@ -94,8 +94,8 @@ static func _cardinal(v: Vector2) -> Vector2:
 
 func _atirar(dir: Vector2) -> void:
 	_recarga = partida.cadencia
-	arma.atacar(self, dir)
-	atacou.emit(dir)
+	if arma.atacar(self, dir):
+		atacou.emit(dir)
 
 
 func ferir() -> void:

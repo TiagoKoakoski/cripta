@@ -9,7 +9,8 @@ const DISTANCIA := 64.0
 const RAIO := 20.0
 
 
-func atacar(j: Jogador, dir: Vector2) -> void:
+## devolve true se o ataque saiu
+func atacar(j: Jogador, dir: Vector2) -> bool:
 	var p := j.partida
 	var dist := DISTANCIA * (1.5 if p.alcance else 1.0)
 	var raio := (28.0 if p.alcance else RAIO) + (8.0 if p.explosivo else 0.0)
@@ -25,6 +26,7 @@ func atacar(j: Jogador, dir: Vector2) -> void:
 			alvo = _inimigo_perto(j, alvo, 50.0)
 		Frasco.lancar(j.sala, p, j.position, alvo, raio)
 	Sons.tocar("tiro")
+	return true
 
 
 func _inimigo_perto(j: Jogador, ponto: Vector2, alcance: float) -> Vector2:

@@ -127,7 +127,7 @@ func limpar_sala(p: Vector2i) -> void:
 	salas_limpas[p] = true
 
 
-## pisou no escada: andar seguinte, +2 de vida, itens mantidos, salas do andar zeradas
+## pisou na escada: andar seguinte, +2 de vida, itens mantidos, salas do andar zeradas
 func subir() -> void:
 	andares_concluidos += 1
 	andar_atual += 1

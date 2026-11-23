@@ -236,6 +236,9 @@ func _inimigo_morreu(e: Inimigo, t: String, pos: Vector2) -> void:
 	if e is Chefe and (e as Chefe).fases == 2:
 		pass   # subchefe: a chave cai quando a sala fica limpa (o Slime Rei deixa filhos)
 	elif e is Chefe:
+		for c: Node in get_children():   # fogo e teia do chefe não ferem depois da vitória
+			if (c is PocaFogo and not (c as PocaFogo).do_jogador) or c is PocaTeia:
+				c.queue_free()
 		for v: Variant in _inimigos.duplicate():
 			if is_instance_valid(v) and v in _invocados:
 				(v as Inimigo).sumir()

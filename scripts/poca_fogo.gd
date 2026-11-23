@@ -42,7 +42,7 @@ func _physics_process(delta: float) -> void:
 	for corpo: Node in get_overlapping_bodies():
 		if not do_jogador and corpo is Jogador:
 			(corpo as Jogador).ferir()
-		elif do_jogador and corpo is Inimigo and _tique <= 0.0:
+		elif do_jogador and corpo is Inimigo and _tique <= 0.0 and (corpo as Inimigo).vivo():
 			(corpo as Inimigo).levar_tiro(1)
 	if _tique <= 0.0:
 		_tique = 0.5
