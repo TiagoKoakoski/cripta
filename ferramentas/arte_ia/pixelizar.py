@@ -221,59 +221,36 @@ def larga(porta, grades=False):
     return out
 
 
-def passos(q, lado):
-    """Parado + 2 passos a partir de 1 vista. Frente/costas: levanta uma perna de cada vez;
-    de lado: abre a passada e depois levanta a perna da frente. O tronco desce 1 px no passo."""
-    a = np.asarray(q).copy()
-    h, w = a.shape[:2]
-    y0 = int(h * 0.74)   # faixa das pernas
-    meio = w // 2
-
-    def levantar(img, x0, x1, dy=2):
-        faixa = img[y0:, x0:x1].copy()
-        img[y0:, x0:x1] = 0
-        img[y0 - dy:h - dy, x0:x1] = np.where(faixa[..., 3:] > 0, faixa, img[y0 - dy:h - dy, x0:x1])
-
-    def deslocar(img, x0, x1, dx):
-        faixa = img[y0:, x0:x1].copy()
-        img[y0:, x0:x1] = 0
-        n0, n1 = max(0, x0 + dx), min(w, x1 + dx)
-        src = faixa[:, n0 - (x0 + dx):faixa.shape[1] - ((x1 + dx) - n1)]
-        img[y0:, n0:n1] = np.where(src[..., 3:] > 0, src, img[y0:, n0:n1])
-
-    def tronco_desce(img):
-        cima = img[:y0].copy()
-        img[1:y0 + 1] = np.where(cima[..., 3:] > 0, cima, img[1:y0 + 1])
-        img[0] = 0
-
-    pa, pb = a.copy(), a.copy()
-    if lado:
-        deslocar(pa, 0, meio, -2)
-        deslocar(pa, meio, w, 2)
-        levantar(pb, meio, w) if lado > 0 else levantar(pb, 0, meio)
-    else:
-        levantar(pa, 0, meio)
-        levantar(pb, meio, w)
-    tronco_desce(pa)
-    tronco_desce(pb)
-    return [q, Image.fromarray(pa), Image.fromarray(pb)]
+def centro_do_tronco(im):
+    """x do centro da cabeça/tronco (40% de cima): alinha os quadros pelo corpo, não pela passada."""
+    a = np.asarray(im)[..., 3] > 0
+    cols = np.nonzero(a[: max(1, int(a.shape[0] * 0.4))].any(axis=0))[0]
+    return (cols[0] + cols[-1] + 1) / 2 if len(cols) else im.width / 2
 
 
 def herois():
-    """Folha de 12 quadros: (baixo, direita, cima, esquerda) x (parado, passo A, passo B)."""
+    """Folha de 16 quadros: (baixo, direita, cima, esquerda) x 4 quadros do ciclo de caminhada
+    (passo, passagem, passo, passagem). Parado = quadro de passagem (1). Esquerda = direita espelhada.
+    Os ciclos vêm de originais/anda_<heroi>_<vista>.jpg (gerados com a folha do herói de referência)."""
     for arq, nome in HEROIS.items():
-        im = Image.open(ORIG / f"{arq}.jpg")
-        figs = figuras(im)[:4]
-        vistas = [contorno(reduzir(recortar(im, c), ALTURA_HEROI)) for c in figs]
-        larg = max(v.width for v in vistas) + 6
+        h = arq.removeprefix("heroi_")
+        vistas = []
+        for vista in ("baixo", "direita", "cima"):
+            im = Image.open(ORIG / f"anda_{h}_{vista}.jpg")
+            figs = figuras(im)
+            if len(figs) != 4:
+                raise SystemExit(f"anda_{h}_{vista}: achei {len(figs)} quadros, esperava 4")
+            escala = ALTURA_HEROI / max(c[3] - c[1] for c in figs)   # mesma escala nos 4 quadros
+            vistas.append([contorno(reduzir(recortar(im, c), max(1, round((c[3] - c[1]) * escala)))) for c in figs])
+        vistas.append([q.transpose(Image.FLIP_LEFT_RIGHT) for q in vistas[1]])
+        larg = max(q.width for v in vistas for q in v) + 8
         alt = ALTURA_HEROI + 2
-        quadros = []
-        for i, v in enumerate(vistas):
-            q = quadro(v, larg, alt)
-            quadros += passos(q, {1: 1, 3: -1}.get(i, 0))
-        folha = Image.new("RGBA", (larg * 12, alt), (0, 0, 0, 0))
-        for i, q in enumerate(quadros):
-            folha.alpha_composite(q, (i * larg, 0))
+        folha = Image.new("RGBA", (larg * 16, alt), (0, 0, 0, 0))
+        for d, v in enumerate(vistas):
+            for k, q in enumerate(v):
+                x = round(larg / 2 - centro_do_tronco(q))
+                x = min(max(0, x), larg - q.width)
+                folha.alpha_composite(q, (d * 4 * larg + k * larg + x, alt - q.height))
         folha.save(HD / f"{nome}.png")
 
 

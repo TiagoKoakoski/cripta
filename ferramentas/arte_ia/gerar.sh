@@ -6,7 +6,9 @@ for nome in $(python3 -c 'import json;print("\n".join(json.load(open("prompts.js
   [ -f "originais/$nome.jpg" ] && continue
   prompt=$(python3 -c "import json,sys;print(json.load(open('prompts.json'))[sys.argv[1]])" "$nome")
   echo "== $nome $(date +%H:%M:%S)" >> gerar.log
-  saida=$(timeout 240 gemini-imagem "$prompt" "originais/$nome.png" 2>&1); cod=$?
+  ref=()   # ciclos de caminhada (anda_<heroi>_<vista>): a folha do herói vai de referência
+  [[ $nome == anda_* ]] && { h=${nome#anda_}; ref=("originais/heroi_${h%_*}.jpg"); }
+  saida=$(timeout 240 gemini-imagem "$prompt" "originais/$nome.png" "${ref[@]}" 2>&1); cod=$?
   echo "$saida" | tail -2 >> gerar.log
   if [ $cod -eq 2 ] || [ $cod -eq 4 ]; then echo "PAROU ($cod) em $nome" >> gerar.log; exit $cod; fi
   # guarda em JPEG reduzido (1376 px de largura): sobra resolução para a pixelização e o repo fica leve

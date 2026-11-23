@@ -9,8 +9,8 @@ extends Object
 const CLASSICO := "classico"
 const DETALHADO := "detalhado"
 ## quadros (hframes) das artes HD que têm mais de 1
-## personagens: (baixo, direita, cima, esquerda) x (parado, passo A, passo B)
-static var QUADROS_HD := {"heroi": 12, "espadachim": 12, "alquimista": 12, "cacador": 12}
+## personagens: (baixo, direita, cima, esquerda) x 4 quadros do ciclo de caminhada (1 = parado)
+static var QUADROS_HD := {"heroi": 16, "espadachim": 16, "alquimista": 16, "cacador": 16}
 
 static var modo := DETALHADO
 static var arquivo := "user://config.cfg"

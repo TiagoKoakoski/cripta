@@ -63,7 +63,7 @@ func _ready() -> void:
 	_fundo.add_child(_torre)
 	_icone = Sprite2D.new()
 	Visual.aplicar(_icone, Jogador.sprite_de(personagem), 2.0, 8)
-	_icone.frame = 6 if _icone.hframes == 12 else 4   # de costas, subindo
+	_icone.frame = 9 if _icone.hframes == 16 else 4   # de costas, subindo
 	_fundo.add_child(_icone)
 	_titulo = _label(Vector2(216, 100), 22, Color(1, 0.85, 0.45))
 	_texto = _label(Vector2(216, 144), 17, Color(0.95, 0.92, 0.85))
@@ -146,8 +146,8 @@ func _process(delta: float) -> void:
 	var k := clampf((_t - 0.3) / 1.0, 0.0, 1.0)
 	var y := lerpf(_y_andar(p.get("de", 0)), _y_andar(p.get("para", 0)), k * k * (3.0 - 2.0 * k))
 	_icone.position = Vector2(148, (y - 2.0) * 2.0)
-	if _icone.hframes == 12:   # de costas, passos
-		_icone.frame = 6 + ([0, 1, 0, 2][int(_t * 8.0) % 4] if k < 1.0 else 0)
+	if _icone.hframes == 16:   # de costas, caminhando
+		_icone.frame = 8 + (int(_t * 8.0) % 4 if k < 1.0 else 1)
 		_icone.offset.y = 0.0
 	else:
 		_icone.frame = 4 + int(_t * 6.0) % 2 if k < 1.0 else 4

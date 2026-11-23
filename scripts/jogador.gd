@@ -115,9 +115,8 @@ func _animar() -> void:
 		base = 4
 	elif _olhar == Vector2.LEFT:
 		base = 6
-	if _sprite.hframes == 12:   # detalhado: parado, passo A, parado, passo B
-		var ciclo: int = [0, 1, 0, 2][int(_passo * 8.0) % 4] if _andando else 0
-		_sprite.frame = base / 2 * 3 + ciclo
+	if _sprite.hframes == 16:   # detalhado: ciclo de 4 quadros; parado = passagem (1)
+		_sprite.frame = base * 2 + (int(_passo * 8.0) % 4 if _andando else 1)
 		_sprite.offset.y = 0.0
 	else:
 		_sprite.frame = base + (int(_passo * 6.0) % 2)

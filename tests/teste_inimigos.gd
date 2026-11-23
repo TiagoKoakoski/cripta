@@ -233,18 +233,18 @@ func teste_animacao_detalhado() -> void:
 	checa(ofs_esq.keys() == [0.0], "esqueleto não sobe e desce no ar (%s)" % [ofs_esq.keys()])
 	checa(ofs_morc.size() > 3, "morcego balança no ar")
 	var j := sala.jogador
-	checa(j._sprite.hframes == 12, "personagem detalhado: 12 quadros (%d)" % j._sprite.hframes)
+	checa(j._sprite.hframes == 16, "personagem detalhado: 16 quadros (%d)" % j._sprite.hframes)
 	var quadros := {}
 	Input.action_press("mover_direita")
 	for i in 40:
 		await physics_frame
 		quadros[j._sprite.frame] = true
 	Input.action_release("mover_direita")
-	checa(quadros.has(4) and quadros.has(5) and quadros.keys().all(func(q: int) -> bool: return q >= 3 and q <= 5),
-		"andando para a direita alterna os passos 3..5 (%s)" % [quadros.keys()])
+	checa(quadros.size() == 4 and quadros.keys().all(func(q: int) -> bool: return q >= 4 and q <= 7),
+		"andando para a direita passa pelos 4 quadros 4..7 (%s)" % [quadros.keys()])
 	for i in 3:
 		await physics_frame
-	checa(j._sprite.frame == 3, "parado: quadro neutro da direção (%d)" % j._sprite.frame)
+	checa(j._sprite.frame == 5, "parado: quadro de passagem da direção (%d)" % j._sprite.frame)
 	Visual.definir_modo("classico")
 	checa(j._sprite.hframes == 8 and esq._sprite.offset.y == 0.0, "clássico continua com 8 quadros")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(Visual.arquivo))

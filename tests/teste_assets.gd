@@ -54,9 +54,9 @@ func _initialize() -> void:
 		if img == null:
 			falhou += 1
 			push_error("FALHOU arte HD %s" % n)
-		elif n in ["heroi", "espadachim", "alquimista", "cacador"] and img.get_width() % 12 != 0:
+		elif n in ["heroi", "espadachim", "alquimista", "cacador"] and img.get_width() % 16 != 0:
 			falhou += 1
-			push_error("FALHOU %s: 12 quadros (4 direções x parado/passo/passo)" % n)
+			push_error("FALHOU %s: 16 quadros (4 direções x 4 do ciclo de caminhada)" % n)
 	# portas largas (cima/baixo, 2 tiles): clássico 32x16, detalhado 64x32
 	for n: String in ["porta_combate", "porta_tesouro", "porta_fonte", "porta_subchefe", "porta_chefe",
 			"porta_chefe_trancada", "porta_inicio", "porta_fechada"]:
