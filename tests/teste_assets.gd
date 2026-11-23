@@ -12,7 +12,7 @@ const SPRITES := {"heroi": 8, "morcego": 2, "slime": 2, "slime_pequeno": 2, "esq
 	"chao_cripta": 1, "chao2_cripta": 1, "chao3_cripta": 1, "parede_cripta": 1, "pilar_cripta": 1,
 	"chao_catacumbas": 1, "chao2_catacumbas": 1, "chao3_catacumbas": 1, "parede_catacumbas": 1, "pilar_catacumbas": 1,
 	"porta_inicio": 1, "porta_combate": 1, "porta_tesouro": 1, "porta_fonte": 1, "porta_subchefe": 1,
-	"porta_chefe": 1, "porta_chefe_trancada": 1, "chave": 1, "alquimista": 8, "cacador": 8, "frasco": 1, "bumerangue": 1, "cavaleiro": 2, "verme": 2, "sombra_gemea": 2, "fogo": 2, "morcego_vampiro": 2, "esqueleto_capitao": 2, "aranha_tecela": 2,
+	"porta_chefe": 1, "porta_chefe_trancada": 1, "chave": 1, "pedra": 1, "caixa": 1, "buraco": 1, "espinhos": 1, "alquimista": 8, "cacador": 8, "frasco": 1, "bumerangue": 1, "cavaleiro": 2, "verme": 2, "sombra_gemea": 2, "fogo": 2, "morcego_vampiro": 2, "esqueleto_capitao": 2, "aranha_tecela": 2,
 	"slime_rei": 2, "mago_sombrio": 2, "fantasma_antigo": 2,
 	"chao_abismo": 1, "chao2_abismo": 1, "chao3_abismo": 1, "parede_abismo": 1, "pilar_abismo": 1}
 const OUTRAS := ["titulo", "texto_fim", "texto_vitoria", "texto_aperte", "brilho", "vinheta"]

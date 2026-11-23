@@ -20,18 +20,42 @@ const LINS := 11
 const PORTA := {GeradorAndar.COMBATE: "porta_combate", GeradorAndar.TESOURO: "porta_tesouro",
 	GeradorAndar.FONTE: "porta_fonte", GeradorAndar.CHEFE: "porta_chefe", GeradorAndar.INICIO: "porta_inicio",
 	GeradorAndar.SUBCHEFE: "porta_subchefe"}
-## pilares por layout (tiles); nunca na linha 5 nem nas colunas 9-10 (corredores das portas)
-const LAYOUTS := [
-	[Vector2i(4, 3), Vector2i(15, 3), Vector2i(4, 7), Vector2i(15, 7)],
-	[Vector2i(6, 2), Vector2i(7, 2), Vector2i(12, 2), Vector2i(13, 2), Vector2i(6, 8), Vector2i(7, 8),
-		Vector2i(12, 8), Vector2i(13, 8)],
-	[Vector2i(3, 2), Vector2i(3, 3), Vector2i(16, 2), Vector2i(16, 3), Vector2i(3, 7), Vector2i(3, 8),
-		Vector2i(16, 7), Vector2i(16, 8)],
-	[Vector2i(7, 3), Vector2i(8, 3), Vector2i(11, 3), Vector2i(12, 3), Vector2i(7, 7), Vector2i(8, 7),
-		Vector2i(11, 7), Vector2i(12, 7)],
+## layouts do interior (18x9; x 0-17 = tiles 1-18, y 0-8 = tiles 1-9). Letras: . chão, P pilar,
+## R pedra, C caixa (quebra), B buraco (só quem anda é bloqueado), E espinhos (ferem). Linha 4 e
+## colunas 8-9 ficam livres (corredores das portas). Todo chão é alcançável a partir das portas.
+static var LAYOUTS := [
+	["..................", "..................", "...P..........P...", "..................", "..................",
+		"..................", "...P..........P...", "..................", ".................."],
+	["..................", ".....PP....PP.....", "..................", "..................", "..................",
+		"..................", "..................", ".....PP....PP.....", ".................."],
+	["..................", "..P............P..", "..P............P..", "..................", "..................",
+		"..................", "..P............P..", "..P............P..", ".................."],
+	["..................", "..................", "......PP..PP......", "..................", "..................",
+		"..................", "......PP..PP......", "..................", ".................."],
+	["..................", ".BB............BB.", ".B..............B.", "..................", "..................",
+		"..................", ".B..............B.", ".BB............BB.", ".................."],
+	["..................", "..................", "...BBBB....BBBB...", "...BBBB....BBBB...", "..................",
+		"...BBBB....BBBB...", "...BBBB....BBBB...", "..................", ".................."],
+	["..................", "..R....C..........", ".......C....R.....", ".R..........C.....", "..................",
+		"....C.......R.....", "..........C....R..", ".R....C.........R.", ".................."],
+	["..................", "..EEEE......EEEE..", "..................", "..................", "..................",
+		"..................", "..................", "..EEEE......EEEE..", ".................."],
+	["..................", "..................", ".CCC..........CCC.", "....B........B....", "..................",
+		"....B........B....", ".CCC..........CCC.", "..................", ".................."],
+	["..................", "..BBB........BBB..", "..BPB........BPB..", "..BBB........BBB..", "..................",
+		"..BBB........BBB..", "..BPB........BPB..", "..BBB........BBB..", ".................."],
+	["..................", ".RRR..........RRR.", ".R..............R.", ".R...C......C...R.", "..................",
+		".R...C......C...R.", ".R..............R.", ".RRR..........RRR.", ".................."],
+	["..................", "....P........P....", "...EEE......EEE...", "..................", "..................",
+		"..................", "...EEE......EEE...", "....P........P....", ".................."],
+	[".BBBBBB....BBBBBB.", "..................", "....R........R....", "..................", "..................",
+		"..................", "....R........R....", "..................", ".BBBBBB....BBBBBB."],
+	["..................", "...C.C......C.C...", "..................", "..C...C....C...C..", "..................",
+		"..C...C....C...C..", "..................", "...C.C......C.C...", ".................."],
 ]
 const CANDIDATOS: Array[Vector2] = [Vector2(48, 40), Vector2(272, 40), Vector2(48, 136), Vector2(272, 136),
-	Vector2(160, 40), Vector2(160, 136), Vector2(88, 88), Vector2(232, 88)]
+	Vector2(160, 40), Vector2(160, 136), Vector2(88, 88), Vector2(232, 88), Vector2(120, 64), Vector2(200, 64),
+	Vector2(120, 112), Vector2(200, 112), Vector2(104, 40), Vector2(216, 136)]
 
 var partida: Partida
 var jogador: Jogador
@@ -73,10 +97,24 @@ static func ponto_de_entrada(entrada: Vector2i) -> Vector2:
 	return Vector2(160, 88)
 
 
-## o corpo de um inimigo (12x10) centrado em p encostaria em algum pilar do layout?
-static func encosta_pilar(p: Vector2, layout: int) -> bool:
+## obstáculos do layout: tile absoluto (Vector2i) -> letra
+static func obstaculos(layout: int) -> Dictionary:
+	var out := {}
+	if layout < 0 or layout >= LAYOUTS.size():
+		return out
+	var l: Array = LAYOUTS[layout]
+	for y in l.size():
+		var linha: String = l[y]
+		for x in linha.length():
+			if linha[x] != ".":
+				out[Vector2i(x + 1, y + 1)] = linha[x]
+	return out
+
+
+## o corpo de um inimigo (12x10) centrado em p encostaria em algum obstáculo do layout?
+static func encosta_obstaculo(p: Vector2, layout: int) -> bool:
 	var corpo := Rect2(p - Vector2(6, 3), Vector2(12, 10))
-	for t: Vector2i in LAYOUTS[layout]:
+	for t: Vector2i in obstaculos(layout):
 		if corpo.intersects(Rect2(Vector2(t * T), Vector2(T, T))):
 			return true
 	return false
@@ -85,7 +123,7 @@ static func encosta_pilar(p: Vector2, layout: int) -> bool:
 static func posicoes_inimigos(layout: int, entrada: Vector2i) -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	for p: Vector2 in CANDIDATOS:
-		if encosta_pilar(p, layout):
+		if encosta_obstaculo(p, layout):
 			continue
 		if entrada != Vector2i.ZERO and p.distance_to(ponto_de_entrada(entrada)) < 80.0:
 			continue
@@ -146,11 +184,11 @@ func configurar(cfg: Dictionary, p: Partida) -> void:
 		_soltar_coracao()
 
 
-## pontos de chão sem pilar (o mago teletransporta para um deles)
+## pontos de chão sem obstáculo (o mago teletransporta para um deles)
 func pontos_livres() -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	for p: Vector2 in CANDIDATOS:
-		if _layout < 0 or not encosta_pilar(p, _layout):
+		if _layout < 0 or not encosta_obstaculo(p, _layout):
 			out.append(p)
 	return out
 
@@ -412,6 +450,20 @@ func _soltar_coracao() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	for e: Area2D in _espinhos:
+		for corpo: Node in e.get_overlapping_bodies():
+			if corpo is Jogador:
+				(corpo as Jogador).ferir()
+	for n: Node in get_tree().get_nodes_in_group("coracao_solto"):
+		var a := n as Area2D
+		if a.get_parent() == self and partida.vida < partida.vida_max:
+			for corpo: Node in a.get_overlapping_bodies():
+				if corpo is Jogador:
+					partida.curar(1)
+					Sons.tocar("fonte")
+					a.queue_free()
+					a.remove_from_group("coracao_solto")
+					break
 	# o coração fica no chão enquanto a vida estiver cheia; pega quando houver espaço
 	if coracao_no_chao() and partida.vida < partida.vida_max:
 		for corpo: Node in _coracao.get_overlapping_bodies():
@@ -440,7 +492,7 @@ func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
 	for d: Vector2i in portas:
 		for t: Vector2i in _tiles_porta(d):
 			vaos[t] = true
-	var pilares: Array = LAYOUTS[layout] if layout >= 0 else []
+	var obst := obstaculos(layout)
 	for y in LINS:
 		for x in COLS:
 			var t := Vector2i(x, y)
@@ -450,9 +502,6 @@ func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
 			if borda and not vaos.has(t):
 				tex = parede
 				_solido(t, Camadas.PAREDE)
-			elif t in pilares:
-				tex = pilar
-				_solido(t, Camadas.PILAR)
 			elif borda:
 				continue  # vão da porta: desenhado pela porta
 			var s := Sprite2D.new()
@@ -461,9 +510,70 @@ func _montar_chao_e_paredes(portas: Dictionary, layout: int) -> void:
 			s.position = Vector2(t * T)
 			s.z_index = -10
 			add_child(s)
+	for t: Vector2i in obst:
+		_criar_obstaculo(t, obst[t], pilar)
 	for d: Vector2i in portas:
 		_criar_porta(d, portas[d])
 	_decorar()
+
+
+var _espinhos: Array[Area2D] = []
+
+
+func _criar_obstaculo(t: Vector2i, letra: String, pilar: String) -> void:
+	var centro := Vector2(t * T) + Vector2(T, T) / 2.0
+	if letra == "C":
+		add_child(Caixa.criar(self, centro))
+		return
+	var s := Sprite2D.new()
+	s.position = centro
+	s.z_index = -9 if letra in ["B", "E"] else -8
+	add_child(s)
+	match letra:
+		"P":
+			Visual.aplicar(s, pilar)
+			_solido(t, Camadas.PILAR)
+		"R":
+			Visual.aplicar(s, "pedra")
+			_solido(t, Camadas.PILAR)
+		"B":
+			Visual.aplicar(s, "buraco")
+			_solido(t, Camadas.BURACO)
+		"E":
+			Visual.aplicar(s, "espinhos")
+			var a := Area2D.new()
+			a.position = centro
+			a.collision_layer = 0
+			a.collision_mask = Camadas.JOGADOR
+			var c := CollisionShape2D.new()
+			var r := RectangleShape2D.new()
+			r.size = Vector2(12, 12)
+			c.shape = r
+			a.add_child(c)
+			add_child(a)
+			_espinhos.append(a)
+
+
+func caixas() -> int:
+	return get_children().filter(func(n: Node) -> bool: return n is Caixa and n.is_in_group("caixa")).size()
+
+
+## coração que cai de uma caixa (cura 1 se faltar vida)
+func coracao_solto(pos: Vector2) -> void:
+	var a := Area2D.new()
+	a.position = pos
+	a.collision_layer = 0
+	a.collision_mask = Camadas.JOGADOR
+	var s := Sprite2D.new()
+	Visual.aplicar(s, "coracao_chao")
+	a.add_child(s)
+	var c := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(12, 12)
+	c.shape = r
+	a.add_child(c)
+	a.add_to_group("coracao_solto")
+	add_child.call_deferred(a)
 
 
 var _tochas: Array[Sprite2D] = []

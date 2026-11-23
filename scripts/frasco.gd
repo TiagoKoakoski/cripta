@@ -50,6 +50,7 @@ func _explodir() -> void:
 			e.levar_tiro(partida.dano, (e.position - position).normalized())
 			if partida.gelo and e.vivo():
 				e.congelar(2.0)
+	Caixa.area(get_tree(), position, raio, partida.dano)
 	if partida.perfurante:
 		PocaFogo.criar(get_parent(), position, 2.0, true, 12.0)
 	Efeitos.explosao(get_parent(), position)

@@ -321,6 +321,37 @@ def porta_tipo(tipo, trancada=False):
     return im
 
 
+def obstaculo(tipo):
+    """Obstáculos clássicos 16x16: pedra, caixa, buraco, espinhos."""
+    im = Image.new("RGBA", (16, 16), TRANSP)
+    cont = rgba("#140f19")
+    for y in range(16):
+        for x in range(16):
+            dx, dy = (x - 7.5) / 7.5, (y - 8) / 7
+            if tipo == "pedra":
+                d = dx * dx + dy * dy
+                if d <= 1:
+                    cor = rgba("#9a90a8") if (dx + dy) < -0.5 else (rgba("#6a6078") if (dx + dy) < 0.6 else rgba("#4a4256"))
+                    im.putpixel((x, y), cont if d > 0.8 else cor)
+            elif tipo == "caixa":
+                borda = x in (0, 15) or y in (0, 15)
+                tabua = y in (5, 10) or x == y or x == 15 - y
+                cor = cont if borda else (rgba("#5a3a20") if tabua else (rgba("#9a6a3a") if y < 8 else rgba("#7a5230")))
+                im.putpixel((x, y), cor)
+            elif tipo == "buraco":
+                if 1 <= x <= 14 and 1 <= y <= 14:
+                    prof = min(x - 1, 14 - x, y - 1, 14 - y)
+                    v = max(0, 40 - prof * 9)
+                    im.putpixel((x, y), (v // 2, v // 3, v // 2 + 4, 255))
+                elif x in (0, 15) or y in (0, 15):
+                    im.putpixel((x, y), rgba("#2a2030"))
+            elif tipo == "espinhos":
+                if (x % 5 in (1, 2, 3)) and (y % 5 in (1, 2, 3)):
+                    pico = x % 5 == 2 and y % 5 == 1
+                    im.putpixel((x, y), rgba("#e8e8f0") if pico else rgba("#8a8a9a"))
+    return im
+
+
 def porta(fechada):
     linhas = []
     for y in range(16):
@@ -424,6 +455,8 @@ def main():
                    h.espelhar(h.HEROI_DIR), h.espelhar(h.HEROI_DIR_2)], ("#ffd8c8", "#c0392b")), "espadachim")
     salvar(sombra(), "sombra")
     salvar(escada(), "escada")
+    for tipo in ("pedra", "caixa", "buraco", "espinhos"):
+        salvar(obstaculo(tipo), tipo)
     salvar(pintar([CHAVE], ("#fff0a0", "#c89a30")), "chave")
     salvar(brilho_tocha(), "brilho")
     salvar(vinheta(), "vinheta")

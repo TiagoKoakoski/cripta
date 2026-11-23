@@ -97,6 +97,8 @@ func _alvo() -> Inimigo:
 
 func _tocou(corpo: Node) -> void:
 	if corpo is StaticBody2D:
+		if corpo is Caixa and not _voltando:
+			(corpo as Caixa).levar_dano(dono.partida.dano)
 		if not _voltando and not atravessa:
 			_virar()
 		return

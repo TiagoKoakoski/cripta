@@ -61,7 +61,7 @@ func _montar(tipo_: String, pos: Vector2, jogador_: Node2D, sala_: Node2D, semen
 	_t = _rng.randf_range(0.3, 0.9)  # cada um começa num ritmo
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	collision_layer = Camadas.INIMIGO
-	collision_mask = Camadas.PAREDE if tipo_ in VOADORES else Camadas.PAREDE | Camadas.PILAR
+	collision_mask = Camadas.PAREDE if tipo_ in VOADORES else Camadas.PAREDE | Camadas.PILAR | Camadas.BURACO
 	Efeitos.sombra_para(self, 6.0 if tipo_ in VOADORES else 0.0)
 	_sprite = Sprite2D.new()
 	Visual.aplicar(_sprite, Inimigo.nome_sprite(tipo_), 1.0, 2)

@@ -52,7 +52,7 @@ func _montar_andar() -> void:
 		var portas := {}
 		for v: Vector2i in GeradorAndar.vizinhos(mapa["salas"], pos):
 			portas[v - pos] = mapa["salas"][v]
-		var cfg := {"tipo": tipo, "portas": portas, "layout": rng.randi_range(0, 3), "semente": rng.randi(),
+		var cfg := {"tipo": tipo, "portas": portas, "layout": rng.randi_range(0, Sala.LAYOUTS.size() - 1), "semente": rng.randi(),
 			"inimigos": Andar.sortear_inimigos(rng, dist[pos], n) if tipo == GeradorAndar.COMBATE else [],
 			"tema": info["tema"], "mult_vida": info["mult_vida"], "chefe": chefe, "subchefe": subchefe,
 			"coracao": tipo == GeradorAndar.COMBATE and rng.randf() < 0.3}

@@ -262,10 +262,8 @@ func teste_pontos_sem_pilar() -> void:
 		for e: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 			pontos += Sala.posicoes_inimigos(layout, e)
 		for pt: Vector2 in pontos:
-			var corpo := Rect2(pt - Vector2(6, 3), Vector2(12, 10))
-			for t: Vector2i in Sala.LAYOUTS[layout]:
-				if corpo.intersects(Rect2(Vector2(t * 16), Vector2(16, 16))):
-					ruins.append([layout, pt])
+			if Sala.encosta_obstaculo(pt, layout):
+				ruins.append([layout, pt])
 		await desmontar(sala)
 	checa(ruins.is_empty(), "nenhum ponto de nascimento/teleporte encosta em pilar %s" % [ruins])
 

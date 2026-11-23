@@ -115,6 +115,8 @@ func _bateu(corpo: Node) -> void:
 	if corpo is StaticBody2D:
 		if _imune_parede > 0.0 and corpo == _ultimo_quique:
 			return
+		if corpo is Caixa and do_jogador:
+			(corpo as Caixa).levar_dano(dano)
 		if ricochetes > 0:
 			ricochetes -= 1
 			_ultimo_quique = corpo
@@ -162,4 +164,5 @@ static func explodir_em(pai: Node, pos: Vector2, dano_: int, excluido: Inimigo) 
 			continue
 		if e.global_position.distance_to(pos) <= RAIO_EXPLOSAO:
 			e.levar_tiro(dano_area, (e.global_position - pos).normalized())
+	Caixa.area(pai.get_tree(), pos, RAIO_EXPLOSAO, dano_area)
 	Efeitos.explosao(pai, pos)

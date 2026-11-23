@@ -46,6 +46,10 @@ func atacar(j: Jogador, dir: Vector2) -> bool:
 				e.congelar(2.0)
 			if p.explosivo and not e.vivo():
 				Tiro.explodir_em(j.sala, e.position, p.dano, e)
+		for n: Node in j.get_tree().get_nodes_in_group("caixa"):
+			var cx := n as Caixa
+			if cx and no_arco(j.position, d, raio + 8.0, angulo, cx.position):
+				cx.levar_dano(p.dano)
 		for n: Node in j.get_tree().get_nodes_in_group("tiro_inimigo"):
 			var t := n as Tiro
 			if t == null or t.is_queued_for_deletion():

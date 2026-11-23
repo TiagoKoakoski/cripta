@@ -29,7 +29,7 @@ static func criar(p: Partida, sala_: Node2D, pos: Vector2) -> Jogador:
 	j.position = pos
 	j.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	j.collision_layer = Camadas.JOGADOR
-	j.collision_mask = Camadas.PAREDE | Camadas.PILAR
+	j.collision_mask = Camadas.PAREDE | Camadas.PILAR | Camadas.BURACO
 	Efeitos.sombra_para(j, 1.0)
 	j._sprite = Sprite2D.new()
 	Visual.aplicar(j._sprite, Jogador.sprite_de(p.personagem), 1.0, 8)
